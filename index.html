@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>برايم - بوابة الدخول الموحدة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --brand-primary: #2563eb;
+            --brand-hover: #1d4ed8;
+        }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: radial-gradient(circle at top right, #1e3a8a 0%, #0f172a 55%, #020617 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bg-brand { background-color: var(--brand-primary) !important; }
+        .hover-bg-brand:hover { background-color: var(--brand-hover) !important; }
+        .text-brand { color: var(--brand-primary) !important; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(18px);
+        }
+
+        /* شاشة التحميل الاحترافية (Preloader) */
+        #cloud-preloader {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        #cloud-preloader.loaded {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .loader-ring {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            border: 3px solid rgba(56, 189, 248, 0.15);
+            border-top-color: #38bdf8;
+            border-right-color: #2563eb;
+            animation: spinRing 1s linear infinite;
+        }
+        @keyframes spinRing {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .shake-error { animation: shake 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="flex flex-col justify-between p-3 sm:p-6 select-none">
+
+    <!-- ================= 1. شاشة التحميل الاحترافية (تعمل حتى اكتمال سحب الداتا من جوجل شيت) ================= -->
+    <div id="cloud-preloader">
+        <div class="relative flex items-center justify-center mb-6">
+            <div class="loader-ring"></div>
+            <div class="absolute w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-blue-500/40">
+                <i id="preloader-logo-icon" class="fa-solid fa-truck-fast"></i>
+            </div>
+        </div>
+
+        <h1 id="preloader-brand-name" class="text-2xl sm:text-3xl font-black text-white tracking-wide">برايم</h1>
+        <p class="text-xs font-bold text-cyan-400 mt-1">نظام إدارة الشحن واللوجستيات الذكي</p>
+
+        <!-- شريط التقدم الحي -->
+        <div class="w-64 sm:w-80 h-2 bg-slate-800 rounded-full overflow-hidden mt-6 border border-slate-700">
+            <div id="preloader-bar" class="h-full bg-gradient-to-l from-cyan-400 to-blue-600 transition-all duration-300" style="width: 15%"></div>
+        </div>
+
+        <div id="preloader-status" class="text-[11px] font-bold text-slate-300 mt-3 flex items-center gap-2">
+            <i class="fa-solid fa-circle-notch fa-spin text-cyan-400"></i>
+            <span>جاري تأمين الاتصال وسحب البيانات من Google Sheets...</span>
+        </div>
+    </div>
+
+    <!-- ================= 2. شاشة الباسورد والتوجيه (تظهر فقط بعد انتهاء التحميل) ================= -->
+    <div id="main-gateway-wrapper" class="opacity-0 transition-opacity duration-500 flex-1 flex flex-col justify-between">
+
+        <!-- الشريط العلوي -->
+        <div class="max-w-5xl w-full mx-auto flex flex-wrap items-center justify-between gap-2 text-white/80 text-xs px-2 py-1">
+            <div class="flex items-center gap-2 font-bold">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>نظام <span class="brand-name-text">برايم</span> — متصل بقواعد البيانات السحابية</span>
+            </div>
+            <div class="flex items-center gap-3 text-[11px] text-cyan-300 font-bold">
+                <span><i class="fa-solid fa-shield-halved text-emerald-400 ml-1"></i>جلسة مشفرة ومؤمّنة</span>
+                <span class="hidden sm:inline"><i class="fa-solid fa-bolt ml-1"></i>يدعم E-Gateway & Shopify</span>
+            </div>
+        </div>
+
+        <!-- الكارت الرئيسي الموحد -->
+        <div class="max-w-5xl w-full mx-auto my-auto py-3">
+            <div class="glass-card rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 border border-white/20">
+
+                <!-- القسم الأيمن: شاشة الباسورد الفعلية + تتبع الشحنات (7 أعمدة) -->
+                <div class="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between">
+                    <div>
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <div id="login-logo-box" class="w-12 h-12 rounded-2xl bg-brand flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-blue-600/30 overflow-hidden">
+                                    <i id="login-logo-icon" class="fa-solid fa-truck-fast"></i>
+                                    <img id="login-logo-img" src="" class="w-full h-full object-cover hidden" alt="Logo">
+                                </div>
+                                <div>
+                                    <h1 id="login-company-name" class="brand-name-text text-xl sm:text-2xl font-black text-slate-900">برايم</h1>
+                                    <p class="text-[11px] font-bold text-slate-400">بوابة الدخول الموحدة للنظام</p>
+                                </div>
+                            </div>
+
+                            <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-extrabold">
+                                <button type="button" onclick="switchScreenMode('auth')" id="tab-btn-auth" class="px-3.5 py-1.5 rounded-lg bg-white text-slate-900 shadow-xs transition">
+                                    <i class="fa-solid fa-lock ml-1 text-brand"></i>تسجيل الدخول
+                                </button>
+                                <button type="button" onclick="switchScreenMode('track')" id="tab-btn-track" class="px-3.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-900 transition">
+                                    <i class="fa-solid fa-magnifying-glass-location ml-1 text-amber-500"></i>تتبع شحنة
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- فورم تسجيل الدخول الرسمي -->
+                        <div id="panel-auth" class="space-y-5">
+                            <div>
+                                <h2 class="text-base sm:text-lg font-black text-slate-800">مرحباً بك في <span class="brand-name-text text-brand">برايم</span> 👋</h2>
+                                <p class="text-xs text-slate-500 mt-0.5">أدخل اسم المستخدم (أو رقم الهاتف) وكلمة المرور الخاصة بحسابك</p>
+                            </div>
+
+                            <!-- صندوق رسائل الخطأ أو التوجيه -->
+                            <div id="login-alert" class="hidden p-3.5 rounded-2xl text-xs font-bold items-center gap-2.5"></div>
+
+                            <form id="login-form" onsubmit="handleGatewayLogin(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1.5">اسم المستخدم أو رقم الموبايل *</label>
+                                    <div class="relative">
+                                        <input id="login-username" type="text" required autocomplete="username"
+                                            placeholder="أدخل اسم المستخدم أو رقم الهاتف المسجل"
+                                            class="w-full pr-10 pl-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/80 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none text-xs sm:text-sm font-bold text-slate-900 transition">
+                                        <i class="fa-solid fa-user-check absolute right-3.5 top-4 text-slate-400 text-sm"></i>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-extrabold text-slate-700 mb-1.5">كلمة المرور *</label>
+                                    <div class="relative">
+                                        <input id="login-password" type="password" required autocomplete="current-password" placeholder="••••••••"
+                                            class="w-full pr-10 pl-10 py-3.5 rounded-xl border border-slate-200 bg-slate-50/80 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none text-xs sm:text-sm font-bold text-slate-900 transition">
+                                        <i class="fa-solid fa-key absolute right-3.5 top-4 text-slate-400 text-sm"></i>
+                                        <button type="button" onclick="togglePassVisibility()" class="absolute left-3.5 top-3.5 text-slate-400 hover:text-slate-700 p-0.5" title="إظهار/إخفاء كلمة المرور">
+                                            <i id="pass-eye-icon" class="fa-regular fa-eye text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between text-xs pt-1">
+                                    <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-600">
+                                        <input id="login-remember" type="checkbox" checked class="w-4 h-4 rounded accent-blue-600">
+                                        <span>تذكر جلسة دخولي على هذا الجهاز</span>
+                                    </label>
+                                    <button type="button" onclick="alert('لإعادة تعيين كلمة المرور، يرجى مراجعة إدارة الشركة.')" class="text-brand font-extrabold hover:underline">
+                                        نسيت كلمة المرور؟
+                                    </button>
+                                </div>
+
+                                <button type="submit" id="login-submit-btn" class="w-full py-3.5 bg-brand hover-bg-brand text-white font-black rounded-xl shadow-lg shadow-blue-600/25 text-sm flex items-center justify-center gap-2 transition transform active:scale-[0.99]">
+                                    <span>تسجيل الدخول</span>
+                                    <i class="fa-solid fa-arrow-left text-xs"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- شاشة تتبع البوليصة للعملاء -->
+                        <div id="panel-track" class="hidden space-y-4">
+                            <div>
+                                <h2 class="text-base sm:text-lg font-black text-slate-800">تتبع حالة شحنتك لحظياً 📦</h2>
+                                <p class="text-xs text-slate-500 mt-0.5">أدخل رقم البوليصة لمعرفة حالة الشحنة وتاريخ آخر تحديث لها</p>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <input id="track-awb-input" type="text" placeholder="أدخل رقم البوليصة (مثال: AWB-9041)..."
+                                    class="flex-1 px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 outline-none text-xs sm:text-sm font-bold">
+                                <button type="button" onclick="trackShipmentNow()" class="px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-black rounded-xl text-xs shadow">
+                                    بحث
+                                </button>
+                            </div>
+
+                            <div id="track-result-box" class="hidden p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 text-xs"></div>
+                        </div>
+                    </div>
+
+                    <!-- فوتر الكارت الأيمن -->
+                    <div class="pt-6 mt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 font-bold">
+                        <span>جميع الحقوق محفوظة &copy; <span class="brand-name-text">برايم</span> 2026</span>
+                        <span class="text-emerald-600"><i class="fa-solid fa-cloud-check ml-1"></i>متصل بالسحابة اللحظية</span>
+                    </div>
+                </div>
+
+                <!-- القسم الأيسر: الهوية والمميزات (5 أعمدة) -->
+                <div class="lg:col-span-5 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-950 p-6 sm:p-9 text-white flex flex-col justify-between relative overflow-hidden">
+                    <div class="relative z-10 space-y-5">
+                        <div class="p-3.5 rounded-2xl bg-white/10 border border-cyan-400/30 flex items-center gap-3.5">
+                            <div class="w-12 h-12 rounded-2xl bg-white p-1.5 shadow-lg flex items-center justify-center flex-shrink-0" id="gateway-egw-logo"></div>
+                            <div>
+                                <span class="text-[10px] font-black text-cyan-300 uppercase tracking-wider">التكامل السحابي المباشر</span>
+                                <h3 class="text-sm font-black text-white">مربوط بمنصة E-Gateway & Shopify</h3>
+                                <p class="text-[11px] text-slate-300 mt-0.5">مزامنة فورية للشحنات والمخزن الذكي والحسابات</p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-lg sm:text-xl font-black leading-snug">
+                            منظومة <span class="brand-name-text text-cyan-400">برايم</span> المتكاملة لإدارة الشحن والتخزين والتحصيل
+                        </h3>
+
+                        <div class="space-y-3 text-xs">
+                            <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black flex-shrink-0 mt-0.5">
+                                    <i class="fa-solid fa-bolt"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-extrabold text-white">مزامنة سحابية فورية ودقيقة</h4>
+                                    <p class="text-slate-300 text-[11px] mt-0.5">حفظ واسترجاع لحظي لكافة الشحنات والتسويات المالية عبر قواعد البيانات السحابية.</p>
+                                </div>
+                            </div>
+
+                            <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-purple-400 text-slate-950 flex items-center justify-center font-black flex-shrink-0 mt-0.5">
+                                    <i class="fa-solid fa-warehouse"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-extrabold text-white">المخزن الذكي وترجمة العروض</h4>
+                                    <p class="text-slate-300 text-[11px] mt-0.5">إدارة مخزون التجار وخصم القطع والعروض تلقائياً فور خروج الشحنات.</p>
+                                </div>
+                            </div>
+
+                            <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-cyan-400 text-slate-950 flex items-center justify-center font-black flex-shrink-0 mt-0.5">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-extrabold text-white">حماية وتوجيه ذكي للصلاحيات</h4>
+                                    <p class="text-slate-300 text-[11px] mt-0.5">يتعرف النظام على صلاحية الحساب ويوجهه تلقائياً إلى لوحته المخصصة بأعلى معايير الأمان.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative z-10 mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
+                        <span>بوابة الدخول المؤمّنة</span>
+                        <span class="font-mono text-emerald-400 font-bold"><i class="fa-solid fa-lock ml-1"></i>Cloud Synced</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div></div>
+    </div>
+
+    <!-- ================= المحرك البرمجي للربط بالـ 3 شيتات والتحقق من الدخول ================= -->
+    <script>
+        // اللينكات الثلاثة المثبتة لقواعد بيانات جوجل شيت
+        const CLOUD_URLS = {
+            CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzDQzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
+            OPS_DB:  "https://script.google.com/macros/s/AKfycbxsbu4BzuCSZ1EYyB54V9qx5g0VQojS6_cyeW-4gnldVEbKQdAXIsKSWK33hQqfEfyN/exec",
+            FIN_DB:  "https://script.google.com/macros/s/AKfycbwIakNG3LFoVSusSqBkmwW5bJEQBqp6j4mbYyZn5dwh1qXTVUplYLa5uje5kHhTaopq/exec"
+        };
+
+        let cloudAccounts = [
+            { user: 'admin', pass: '123456', phone: '01000000000', code: 'ADM-01', role: 'ADMIN', name: 'المدير العام', targetPage: 'admin.html' },
+            { user: 'pepon', pass: '123456', phone: '01100000000', code: 'MER-101', role: 'MERCHANT', store: 'بيبون ستور', name: 'بدر رفعت', discount: 5, targetPage: 'merchant.html' },
+            { user: 'elnoor', pass: '123456', phone: '01022334455', code: 'MER-102', role: 'MERCHANT', store: 'متجر النور فاشون', name: 'أحمد النور', discount: 0, targetPage: 'merchant.html' },
+            { user: 'techzone', pass: '123456', phone: '01288776655', code: 'MER-103', role: 'MERCHANT', store: 'تك زون للإلكترونيات', name: 'كريم عادل', discount: 10, targetPage: 'merchant.html' },
+            { user: 'ahmed_cr', pass: '123456', phone: '01011112222', id: 'CR-01', role: 'COURIER', name: 'أحمد المندوب', zone: 'المعادي وحلوان', comm: 20, targetPage: 'courier.html' },
+            { user: 'mahmoud_cr', pass: '123456', phone: '01233334444', id: 'CR-02', role: 'COURIER', name: 'محمود سمير', zone: 'الإسكندرية - سموحة', comm: 25, targetPage: 'courier.html' },
+            { user: 'karim_cr', pass: '123456', phone: '01155556666', id: 'CR-03', role: 'COURIER', name: 'كريم طارق', zone: 'مدينة نصر والتجمع', comm: 20, targetPage: 'courier.html' }
+        ];
+        let cloudOrders = [];
+
+        function renderEGatewayBrandLogo() {
+            const savedLogo = localStorage.getItem('swift_egateway_logo');
+            const slot = document.getElementById('gateway-egw-logo');
+            if (!slot) return;
+            if (savedLogo) {
+                slot.innerHTML = `<img src="${savedLogo}" class="w-10 h-10 object-contain" alt="E-Gateway">`;
+                return;
+            }
+            slot.innerHTML = `<svg viewBox="0 0 100 100" class="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="egwG" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1e3a8a"/><stop offset="50%" stop-color="#0284c7"/><stop offset="100%" stop-color="#22d3ee"/></linearGradient></defs>
+                <path d="M26 78 V45 C26 24 42 14 56 14 C68 14 76 20 80 28 L70 33 C67 27 62 24 55 24 C45 24 37 31 37 45 V74 L26 78 Z" fill="url(#egwG)"/>
+                <path d="M68 52 V80 C68 85 71 88 76 90 L64 90 C60 87 58 83 58 77 V56 L68 52 Z" fill="url(#egwG)"/>
+                <rect x="66" y="28" width="7" height="7" rx="1" fill="#22d3ee"/><rect x="75" y="20" width="6" height="6" rx="1" fill="#38bdf8"/><rect x="64" y="16" width="5" height="5" rx="1" fill="#06b6d4"/>
+                <path d="M18 82 C26 68 38 54 54 40 L48 36 L64 33 L60 49 L55 44 C41 58 30 71 22 84 Z" fill="url(#egwG)"/>
+                <path d="M20 86 C38 76 58 58 82 32 L75 27 L94 22 L89 41 L83 36 C60 63 40 80 20 86 Z" fill="#06b6d4"/>
+            </svg>`;
+        }
+
+        function applyBrandNameEverywhere(name) {
+            const finalName = name || localStorage.getItem('prime_company_name') || 'برايم';
+            localStorage.setItem('prime_company_name', finalName);
+            document.title = `${finalName} - بوابة الدخول الموحدة`;
+            document.querySelectorAll('.brand-name-text').forEach(el => el.innerText = finalName);
+            const preName = document.getElementById('preloader-brand-name');
+            if (preName) preName.innerText = finalName;
+        }
+
+        async function initCloudBootSequence() {
+            const bar = document.getElementById('preloader-bar');
+            const statusTxt = document.getElementById('preloader-status');
+
+            applyBrandNameEverywhere(localStorage.getItem('prime_company_name') || 'برايم');
+
+            try {
+                statusTxt.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyan-400"></i><span>جاري تحميل الحسابات والإعدادات من السحابة...</span>`;
+                bar.style.width = '40%';
+
+                const [coreRes, opsRes, finRes] = await Promise.all([
+                    fetch(CLOUD_URLS.CORE_DB).then(r => r.json()).catch(() => null),
+                    fetch(CLOUD_URLS.OPS_DB).then(r => r.json()).catch(() => null),
+                    fetch(CLOUD_URLS.FIN_DB).then(r => r.json()).catch(() => null)
+                ]);
+
+                bar.style.width = '80%';
+                statusTxt.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyan-400"></i><span>جاري تأمين بوابة الدخول...</span>`;
+
+                if (coreRes && coreRes.status === 'success') {
+                    localStorage.setItem('prime_core_cache', JSON.stringify(coreRes));
+
+                    let adminUser = 'admin';
+                    let adminPass = '123456';
+                    let compName = 'برايم';
+
+                    if (Array.isArray(coreRes.settings)) {
+                        coreRes.settings.forEach(s => {
+                            if (s.key === 'companyName' && s.value) {
+                                compName = (s.value === 'سويفت شيب برو') ? (localStorage.getItem('prime_company_name') || 'برايم') : s.value;
+                            }
+                            if (s.key === 'adminUser' && s.value) adminUser = String(s.value);
+                            if (s.key === 'adminPass' && s.value) adminPass = String(s.value);
+                        });
+                    }
+                    applyBrandNameEverywhere(compName);
+
+                    const builtAccounts = [
+                        { user: adminUser, pass: adminPass, phone: '01000000000', code: 'ADM-01', role: 'ADMIN', name: 'المدير العام', targetPage: 'admin.html' }
+                    ];
+
+                    if (Array.isArray(coreRes.merchants) && coreRes.merchants.length > 0) {
+                        coreRes.merchants.forEach(m => {
+                            if (m.user || m.store) {
+                                builtAccounts.push({
+                                    user: String(m.user || m.store).trim(),
+                                    pass: String(m.pass || '123456').trim(),
+                                    phone: String(m.phone || '').trim(),
+                                    code: String(m.code || 'MER-101'),
+                                    role: 'MERCHANT',
+                                    store: String(m.store),
+                                    name: String(m.owner || m.store),
+                                    discount: parseFloat(m.discount) || 0,
+                                    targetPage: 'merchant.html'
+                                });
+                            }
+                        });
+                    }
+
+                    if (Array.isArray(coreRes.couriers) && coreRes.couriers.length > 0) {
+                        coreRes.couriers.forEach(c => {
+                            if (c.user || c.name) {
+                                builtAccounts.push({
+                                    user: String(c.user || c.name).trim(),
+                                    pass: String(c.pass || '123456').trim(),
+                                    phone: String(c.phone || '').trim(),
+                                    id: String(c.id || 'CR-01'),
+                                    role: 'COURIER',
+                                    name: String(c.name),
+                                    zone: String(c.zone || 'القاهرة'),
+                                    comm: parseFloat(c.comm) || 20,
+                                    targetPage: 'courier.html'
+                                });
+                            }
+                        });
+                    }
+
+                    if (builtAccounts.length > 1) {
+                        cloudAccounts = builtAccounts;
+                    }
+                }
+
+                if (opsRes && opsRes.status === 'success') {
+                    localStorage.setItem('prime_ops_cache', JSON.stringify(opsRes));
+                    if (Array.isArray(opsRes.orders)) {
+                        cloudOrders = opsRes.orders;
+                    }
+                }
+
+                if (finRes && finRes.status === 'success') {
+                    localStorage.setItem('prime_fin_cache', JSON.stringify(finRes));
+                }
+
+                bar.style.width = '100%';
+                statusTxt.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span class="text-emerald-300">تم الاتصال وتحميل البيانات بنجاح ✓</span>`;
+            } catch (err) {
+                bar.style.width = '100%';
+            }
+
+            setTimeout(() => {
+                document.getElementById('cloud-preloader').classList.add('loaded');
+                document.getElementById('main-gateway-wrapper').classList.remove('opacity-0');
+            }, 350);
+        }
+
+        function findAccountByIdentifier(identifier) {
+            const clean = (identifier || '').trim().toLowerCase();
+            if (!clean) return null;
+            return cloudAccounts.find(acc =>
+                String(acc.user).toLowerCase() === clean ||
+                (acc.phone && String(acc.phone) === clean) ||
+                (acc.code && String(acc.code).toLowerCase() === clean) ||
+                (acc.id && String(acc.id).toLowerCase() === clean) ||
+                (acc.store && String(acc.store).toLowerCase() === clean)
+            );
+        }
+
+        function handleGatewayLogin(event) {
+            event.preventDefault();
+            const userInp = document.getElementById('login-username').value;
+            const passInp = document.getElementById('login-password').value.trim();
+            const alertBox = document.getElementById('login-alert');
+
+            const account = findAccountByIdentifier(userInp);
+
+            if (!account || String(account.pass) !== String(passInp)) {
+                alertBox.className = "flex p-3.5 rounded-2xl text-xs font-extrabold items-center gap-2.5 bg-rose-50 text-rose-700 border border-rose-200 shake-error";
+                alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation text-base"></i><span>بيانات الدخول غير صحيحة، يرجى التأكد من اسم المستخدم وكلمة المرور.</span>`;
+                return;
+            }
+
+            localStorage.setItem('swift_active_session', JSON.stringify({
+                ...account,
+                loginTimestamp: new Date().toLocaleString('ar-EG')
+            }));
+
+            alertBox.className = "flex p-3.5 rounded-2xl text-xs font-extrabold items-center gap-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200";
+            alertBox.innerHTML = `<i class="fa-solid fa-circle-check text-base text-emerald-600"></i><span>تم التحقق من الحساب بنجاح! جاري تحويلك الآن...</span>`;
+
+            setTimeout(() => {
+                window.location.href = account.targetPage;
+            }, 300);
+        }
+
+        function togglePassVisibility() {
+            const inp = document.getElementById('login-password');
+            const icon = document.getElementById('pass-eye-icon');
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                icon.className = 'fa-regular fa-eye-slash text-sm text-brand';
+            } else {
+                inp.type = 'password';
+                icon.className = 'fa-regular fa-eye text-sm';
+            }
+        }
+
+        function switchScreenMode(mode) {
+            const authP = document.getElementById('panel-auth');
+            const trackP = document.getElementById('panel-track');
+            const btnA = document.getElementById('tab-btn-auth');
+            const btnT = document.getElementById('tab-btn-track');
+
+            if (mode === 'auth') {
+                authP.classList.remove('hidden');
+                trackP.classList.add('hidden');
+                btnA.className = "px-3.5 py-1.5 rounded-lg bg-white text-slate-900 shadow-xs transition";
+                btnT.className = "px-3.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-900 transition";
+            } else {
+                authP.classList.add('hidden');
+                trackP.classList.remove('hidden');
+                btnT.className = "px-3.5 py-1.5 rounded-lg bg-white text-slate-900 shadow-xs transition";
+                btnA.className = "px-3.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-900 transition";
+            }
+        }
+
+        function trackShipmentNow() {
+            const code = document.getElementById('track-awb-input').value.trim().replace('#', '').toUpperCase();
+            const box = document.getElementById('track-result-box');
+            if (!code) return alert('أدخل رقم البوليصة أولاً');
+
+            const found = cloudOrders.find(o => String(o.awb).toUpperCase() === code);
+            box.classList.remove('hidden');
+
+            if (!found) {
+                box.innerHTML = `<div class="text-rose-600 font-bold text-center py-2"><i class="fa-solid fa-circle-xmark ml-1"></i>لا توجد شحنة مسجلة بهذا الرقم (${code})</div>`;
+                return;
+            }
+
+            const totalCod = (parseFloat(found.prodPrice) || 0) + (parseFloat(found.fee) || 0);
+            box.innerHTML = `
+                <div class="flex justify-between items-center border-b pb-2">
+                    <div>
+                        <span class="font-mono font-black text-brand text-sm">#${found.awb}</span>
+                        <span class="px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 text-[10px] font-black mr-1">${found.source || ''}</span>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-black text-[11px]">${found.status}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-[11px]">
+                    <div><span class="text-slate-400 block">الراسل (المتجر):</span><strong>${found.merchant}</strong></div>
+                    <div><span class="text-slate-400 block">المستلم والمنطقة:</span><strong>${found.recipient} (${found.gov})</strong></div>
+                    <div><span class="text-slate-400 block">إجمالي البوليصة:</span><strong class="text-emerald-700">${totalCod} ج.م</strong></div>
+                    <div><span class="text-slate-400 block">آخر تحديث:</span><strong>${found.actionAt || found.createdAt}</strong></div>
+                </div>
+            `;
+        }
+
+        renderEGatewayBrandLogo();
+        window.addEventListener('DOMContentLoaded', initCloudBootSequence);
+    </script>
+</body>
+</html>
