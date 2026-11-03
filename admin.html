@@ -92,9 +92,9 @@
         <p id="prime-loader-sub" class="text-[11px] font-bold text-slate-300 mt-3">جاري سحب البيانات الحية من Google Sheets...</p>
     </div>
 
-    <!-- مؤشر حالة الحفظ الفوري في جوجل شيت -->
+    <!-- مؤشر حالة الحفظ الفعلي في جوجل شيت -->
     <div id="prime-sync-badge" class="no-print fixed bottom-14 lg:bottom-4 left-4 z-40 bg-slate-900 text-white px-3.5 py-2 rounded-xl text-[11px] font-extrabold flex items-center gap-2 shadow-xl border border-white/10">
-        <span id="prime-sync-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span id="prime-sync-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
         <span id="prime-sync-text">متصل بـ Google Sheets ✓</span>
     </div>
 
@@ -113,7 +113,7 @@
                 <button onclick="setSidebarMode('closed')" id="mode-closed-btn" title="إغلاق القائمة" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-rose-600 transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <button onclick="pullAllFromGoogleSheets(true)" title="تحديث البيانات من جوجل شيت الآن" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[11px] font-black flex items-center gap-1 transition">
-                <i class="fa-solid fa-rotate"></i><span class="hidden sm:inline">مزامنة الشيت</span>
+                <i class="fa-solid fa-rotate"></i><span class="hidden sm:inline">تحديث من الشيت</span>
             </button>
         </div>
 
@@ -298,7 +298,7 @@
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <h2 class="font-extrabold text-base text-slate-900"><i class="fa-solid fa-boxes-stacked text-amber-500 ml-1"></i> إدارة وتوجيه كافة الشحنات (مزامنة فورية مع جوجل شيت)</h2>
+                            <h2 class="font-extrabold text-base text-slate-900"><i class="fa-solid fa-boxes-stacked text-amber-500 ml-1"></i> إدارة وتوجيه كافة الشحنات (مزامنة وحفظ فعلي في Google Sheets)</h2>
                             <p class="text-xs text-slate-500">اضغط على <strong>اسم العميل</strong> لعرض عنوانه، أو <strong>المنتج</strong> للكومنتات، أو <strong>التاريخ</strong> لعرض السجل الزمني الكامل</p>
                         </div>
                         <div class="flex flex-wrap gap-2 w-full sm:w-auto">
@@ -568,18 +568,15 @@
     <!-- حاوية الطباعة الحرة متعددة الصفحات -->
     <div id="print-mount-root"></div>
 
-    <!-- ================= المحرك البرمجي الشامل + الربط السحابي المباشر بالـ 3 شيتات ================= -->
+    <!-- ================= المحرك البرمجي الشامل + التحقق الصارم من الحفظ في جوجل شيت ================= -->
     <script>
-        // اللينكات الثلاثة المثبتة لقواعد بيانات جوجل شيت
         const PRIME_CLOUD_URLS = {
             CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzDQzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
             OPS_DB:  "https://script.google.com/macros/s/AKfycbxsbu4BzuCSZ1EYyB54V9qx5g0VQojS6_cyeW-4gnldVEbKQdAXIsKSWK33hQqfEfyN/exec",
             FIN_DB:  "https://script.google.com/macros/s/AKfycbwIakNG3LFoVSusSqBkmwW5bJEQBqp6j4mbYyZn5dwh1qXTVUplYLa5uje5kHhTaopq/exec"
         };
 
-        // باسورد الإدارة الرئيسي المعتمد
         const MASTER_ADMIN_PASS = "150150";
-
         const ALL_STATUSES = ["جديد", "قيد التأكيد", "جاهز للشحن", "تم الشحن مع المندوب", "تم التسليم", "تم التسليم جزئي", "مؤجل", "تم الإلغاء", "مرتجع وتم دفع الشحن", "مرتجع ولم يدفع الشحن"];
 
         let customEGatewayLogoDataUrl = localStorage.getItem('swift_egateway_logo') || '';
@@ -673,14 +670,14 @@
             const dot = document.getElementById('prime-sync-dot');
             const txt = document.getElementById('prime-sync-text');
             if (!dot || !txt) return;
-            if (state === 'saving') { dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping'; txt.innerText = msg || 'جاري الحفظ في Google Sheets...'; }
-            else if (state === 'error') { dot.className = 'w-2 h-2 rounded-full bg-rose-500'; txt.innerText = msg || 'تعذر الاتصال السحابي'; }
-            else { dot.className = 'w-2 h-2 rounded-full bg-emerald-400'; txt.innerText = msg || 'تم الحفظ في Google Sheets ✓'; }
+            if (state === 'saving') { dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping'; txt.innerText = msg || '⏳ جاري الحفظ والتحقق في Google Sheets...'; }
+            else if (state === 'error') { dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500'; txt.innerText = msg || '❌ لم يتم الحفظ في الشيت!'; }
+            else { dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400'; txt.innerText = msg || '✅ تم الحفظ الفعلي في Google Sheets ✓'; }
         }
 
-        // ================= دوال المزامنة السحابية مع الشيتات الثلاثة =================
+        // ================= دوال السحب والتحقق الصارم من الحفظ الفعلي في جوجل شيت =================
         async function pullAllFromGoogleSheets(manualRefresh = false) {
-            if (manualRefresh) setSyncStatus('saving', 'جاري جلب أحدث البيانات من الشيتات...');
+            if (manualRefresh) setSyncStatus('saving', '⏳ جاري جلب أحدث البيانات من الشيتات...');
             const bar = document.getElementById('prime-loader-bar');
 
             try {
@@ -742,9 +739,9 @@
                 }
 
                 renderAll();
-                setSyncStatus('ok', 'متصل ومحدث من Google Sheets ✓');
+                setSyncStatus('ok', '✅ متصل ومحدث من Google Sheets ✓');
             } catch (e) {
-                setSyncStatus('error');
+                setSyncStatus('error', '❌ تعذر الجلب من جوجل شيت');
             }
 
             if (bar) bar.style.width = '100%';
@@ -754,38 +751,61 @@
         }
 
         async function pushToCoreDB() {
-            setSyncStatus('saving', 'جاري الحفظ في الشيت الأول (Core_DB)...');
+            setSyncStatus('saving', '⏳ جاري الكتابة والتحقق الفعلي في جوجل شيت (Core_DB)...');
             try {
-                await fetch(PRIME_CLOUD_URLS.CORE_DB, {
+                const res = await fetch(PRIME_CLOUD_URLS.CORE_DB, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'SYNC_ALL_CORE', merchants: merchantsData, couriers: couriersData, zones: zonesData, warehouse: warehouseData })
                 });
-                setSyncStatus('ok', 'تم الحفظ في Core_DB ✓');
-            } catch (e) { setSyncStatus('error'); }
+                const result = await res.json();
+                if (!result || result.status !== 'success') throw new Error(result?.message || 'رفض الشيت عملية الحفظ');
+
+                const verify = await fetch(PRIME_CLOUD_URLS.CORE_DB).then(r => r.json());
+                if (merchantsData.length > 0 && (!verify.merchants || verify.merchants.length === 0)) {
+                    setSyncStatus('error', '❌ لم يُحفظ! شغّل setupSheet في الشيت الأول');
+                    alert('⚠️ تنبيه هام: الشيت الأول (Core_DB) لم يحفظ البيانات لأن جداول الشيت غير مهيأة!\n\nالحل: افتح الشيت الأول -> Extensions -> Apps Script -> اضغط Run على دالة setupSheet ووافق على الصلاحيات (Allow).');
+                    return;
+                }
+                setSyncStatus('ok', `✅ تم الحفظ الفعلي في الشيت الأول (${verify.merchants.length} تاجر) ✓`);
+            } catch (e) {
+                setSyncStatus('error', '❌ فشل الحفظ في الشيت الأول! تأكد من صلاحية Anyone');
+            }
         }
 
         async function pushToOpsDB() {
-            setSyncStatus('saving', 'جاري حفظ الشحنات في الشيت الثاني (Ops_DB)...');
+            setSyncStatus('saving', '⏳ جاري الكتابة والتحقق الفعلي في شيت الشحنات (Ops_DB)...');
             try {
-                await fetch(PRIME_CLOUD_URLS.OPS_DB, {
+                const res = await fetch(PRIME_CLOUD_URLS.OPS_DB, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'SYNC_ORDERS', orders: ordersData })
                 });
+                const result = await res.json();
+                if (!result || result.status !== 'success') throw new Error(result?.message || 'رفض الشيت عملية الحفظ');
+
                 fetch(PRIME_CLOUD_URLS.CORE_DB, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'UPDATE_WAREHOUSE', warehouse: warehouseData })
                 });
-                setSyncStatus('ok', 'تم حفظ الشحنات في Operations_DB ✓');
-            } catch (e) { setSyncStatus('error'); }
+
+                const verify = await fetch(PRIME_CLOUD_URLS.OPS_DB).then(r => r.json());
+                if (ordersData.length > 0 && (!verify.orders || verify.orders.length === 0)) {
+                    setSyncStatus('error', '❌ لم يُحفظ! شغّل setupSheet في الشيت الثاني');
+                    alert('⚠️ تنبيه هام: شيت الشحنات (Operations_DB) لم يحفظ الأوردر لأن جدول Active_Orders غير موجود بالشيت!\n\nالحل: افتح الشيت الثاني -> Extensions -> Apps Script -> اضغط Run على دالة setupSheet ووافق على الصلاحيات (Allow).');
+                    return;
+                }
+                setSyncStatus('ok', `✅ تم الحفظ الفعلي في جوجل شيت (${verify.orders.length} شحنة مسجلة) ✓`);
+            } catch (e) {
+                setSyncStatus('error', '❌ فشل الحفظ في شيت الشحنات! تأكد من صلاحية Anyone');
+            }
         }
 
         async function pushToFinDB() {
-            setSyncStatus('saving', 'جاري حفظ الخزنة في الشيت الثالث (Fin_DB)...');
+            setSyncStatus('saving', '⏳ جاري الكتابة والتحقق الفعلي في شيت الخزنة (Fin_DB)...');
             try {
-                await fetch(PRIME_CLOUD_URLS.FIN_DB, {
+                const res = await fetch(PRIME_CLOUD_URLS.FIN_DB, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
@@ -795,8 +815,19 @@
                         treasuryLogs: treasuryLogs
                     })
                 });
-                setSyncStatus('ok', 'تم حفظ الخزنة في Finance_DB ✓');
-            } catch (e) { setSyncStatus('error'); }
+                const result = await res.json();
+                if (!result || result.status !== 'success') throw new Error(result?.message || 'رفض الشيت عملية الحفظ');
+
+                const verify = await fetch(PRIME_CLOUD_URLS.FIN_DB).then(r => r.json());
+                if (treasuryLogs.length > 0 && (!verify.treasuryLogs || verify.treasuryLogs.length === 0)) {
+                    setSyncStatus('error', '❌ لم يُحفظ! شغّل setupSheet في الشيت الثالث');
+                    alert('⚠️ تنبيه هام: شيت الخزنة (Finance_DB) لم يحفظ البيانات لأن الجداول غير مهيأة!\n\nالحل: افتح الشيت الثالث -> Extensions -> Apps Script -> اضغط Run على دالة setupSheet ووافق على الصلاحيات (Allow).');
+                    return;
+                }
+                setSyncStatus('ok', '✅ تم الحفظ الفعلي في شيت الخزنة ✓');
+            } catch (e) {
+                setSyncStatus('error', '❌ فشل الحفظ في شيت الخزنة!');
+            }
         }
 
         function getSourceBadgeHTML(source) {
