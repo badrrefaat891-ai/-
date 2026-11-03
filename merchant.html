@@ -188,7 +188,7 @@
 
                     <button onclick="switchTab('tab-egateway', this)" id="nav-btn-egateway" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition">
                         <div class="flex items-center gap-3"><i class="fa-solid fa-bolt text-sm w-5 text-center text-cyan-400"></i><span class="nav-label">ربط E-Gateway وشوبيفاي</span></div>
-                        <span id="badge-egw-pending" class="badge-count px-2 py-0.5 text-[10px] rounded-full bg-cyan-500/30 text-cyan-300">3 جاهز</span>
+                        <span id="badge-egw-pending" class="badge-count px-2 py-0.5 text-[10px] rounded-full bg-cyan-500/30 text-cyan-300">2 جاهز</span>
                     </button>
 
                     <button onclick="switchTab('tab-warehouse', this)" id="nav-btn-warehouse" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition">
@@ -245,7 +245,7 @@
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 class="text-lg sm:text-xl font-black text-slate-900">أهلاً بك في <span class="brand-name-span text-brand">برايم</span>، <span id="welcome-merchant-name" class="text-slate-800">بيبون ستور</span> 👋</h1>
-                        <p class="text-xs text-slate-500 mt-1">متابعة لحظية لشحناتك، رصيد محفظتك الجاهز للتوريد، ومخزون منتجاتك لدى الشركة</p>
+                        <p class="text-xs text-slate-500 mt-1">متابعة لحظية لشحناتك، رصيد محفظتك الجاهز للتوريد، ومخزون منتجاتك الفعلي لدى الشركة</p>
                     </div>
                     <div class="flex flex-wrap gap-2 w-full sm:w-auto">
                         <button onclick="openOrderModal()" class="flex-1 sm:flex-initial justify-center px-4 py-2.5 bg-brand text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
@@ -313,8 +313,8 @@
                             <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg"><i class="fa-solid fa-boxes-packing"></i></div>
                         </div>
                         <div class="mt-3 text-[11px] text-orange-700 font-bold flex justify-between">
-                            <span>تُجهز وتُشحن تلقائياً</span>
-                            <button onclick="switchTab('tab-warehouse', document.getElementById('nav-btn-warehouse'))" class="underline">إدارة مخزوني &larr;</button>
+                            <span>رصيد فعلي معتمد من الإدارة</span>
+                            <button onclick="switchTab('tab-warehouse', document.getElementById('nav-btn-warehouse'))" class="underline">عرض مخزوني &larr;</button>
                         </div>
                     </div>
                 </div>
@@ -349,7 +349,7 @@
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="font-extrabold text-sm text-slate-900"><i class="fa-solid fa-warehouse text-orange-500 ml-1"></i> أرصدة منتجاتك بالمخزن</h3>
-                            <button onclick="switchTab('tab-warehouse', document.getElementById('nav-btn-warehouse'))" class="text-xs font-bold text-orange-600 hover:underline">المخزن &larr;</button>
+                            <button onclick="switchTab('tab-warehouse', document.getElementById('nav-btn-warehouse'))" class="text-xs font-bold text-orange-600 hover:underline">التفاصيل &larr;</button>
                         </div>
                         <div id="overview-my-stock-list" class="space-y-2.5 text-xs"></div>
                     </div>
@@ -504,7 +504,6 @@
                             <p class="text-xs text-slate-500">بمجرد الضغط على "اشحن الأوردر الآن"، يأخذ رقم بوليصة `#EGW-` ويُحفظ فوراً في شيت الشحنات</p>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="addSimulatedStoreOrder()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold">+ محاكاة طلب عميل جديد على متجري</button>
                             <button onclick="dispatchAllPendingEGW()" class="px-4 py-2 egateway-grad text-white rounded-xl text-xs font-black shadow flex items-center gap-1.5">
                                 <i class="fa-solid fa-paper-plane"></i> شحن كل الأوردرات المنتظرة الآن
                             </button>
@@ -530,16 +529,22 @@
                 </div>
             </div>
 
-            <!-- ================= الصفحة 4: مخزوني لدى شركة الشحن ================= -->
+            <!-- ================= الصفحة 4: مخزوني لدى شركة الشحن (للعرض والمتابعة فقط - بدون إضافة أو تزويد من التاجر) ================= -->
             <div id="tab-warehouse" class="tab-pane space-y-5">
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-base sm:text-lg font-black text-slate-900"><i class="fa-solid fa-warehouse text-orange-500 ml-1"></i> مخزوني لدى شركة الشحن (Smart Fulfillment)</h2>
-                        <p class="text-xs text-slate-500 mt-1">المنتجات المخزنة باسم متجرك لدى الشركة؛ لا تُضاف أي رسوم تغليف إلا في حال قيام الإدارة بتحديد تغليف خاص للمنتج</p>
+                        <h2 class="text-base sm:text-lg font-black text-slate-900"><i class="fa-solid fa-warehouse text-orange-500 ml-1"></i> مخزوني الفعلي لدى شركة الشحن (للمتابعة فقط)</h2>
+                        <p class="text-xs text-slate-500 mt-1">يعرض هذا الجدول الأرصدة الفعلية المستلمة والمجرودة في مخازن الشركة؛ يتم تسجيل وإضافة الكميات بواسطة إدارة المخزن فقط بعد استلام البضاعة</p>
                     </div>
-                    <button onclick="openModal('modal-stock-request')" class="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-2">
-                        <i class="fa-solid fa-boxes-packing"></i> + إرسال دفعة بضاعة / إضافة منتج للمخزن
-                    </button>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="px-3.5 py-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl text-xs font-extrabold flex items-center gap-1.5">
+                            <i class="fa-solid fa-lock text-amber-600"></i>
+                            <span>إضافة وتزويد المخزون يتم عبر إدارة الشركة فقط</span>
+                        </span>
+                        <button onclick="contactAdminForStockSupply()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
+                            <i class="fa-brands fa-whatsapp"></i> التنسيق مع الإدارة لإرسال بضاعة للمخزن
+                        </button>
+                    </div>
                 </div>
 
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -548,12 +553,11 @@
                             <thead class="bg-slate-50 text-slate-600 font-bold border-b">
                                 <tr>
                                     <th class="p-3.5">كود الصنف (SKU)</th>
-                                    <th class="p-3.5">اسم المنتج (المطابق لمتجر E-Gateway وشوبيفاي)</th>
-                                    <th class="p-3.5">نوع المنتج</th>
+                                    <th class="p-3.5">اسم المنتج المعتمد بالمخزن</th>
+                                    <th class="p-3.5">طبيعة المنتج</th>
                                     <th class="p-3.5">رسوم التغليف (تُحدد من الشركة فقط)</th>
-                                    <th class="p-3.5">الرصيد المتاح حالياً</th>
+                                    <th class="p-3.5">الرصيد الفعلي المتاح حالياً</th>
                                     <th class="p-3.5">حالة المخزون</th>
-                                    <th class="p-3.5 text-center">تزويد رصيد</th>
                                 </tr>
                             </thead>
                             <tbody id="my-warehouse-tbody" class="divide-y divide-slate-100"></tbody>
@@ -1014,22 +1018,6 @@
             }
         }
 
-        async function pushToCoreDB() {
-            setSyncStatus('saving', '⏳ جاري حفظ المخزون في Google Sheets...');
-            try {
-                const res = await fetch(PRIME_CLOUD_URLS.CORE_DB, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'UPDATE_WAREHOUSE', warehouse: warehouseData })
-                });
-                const result = await res.json();
-                if (!result || result.status !== 'success') throw new Error('رفض الشيت الحفظ');
-                setSyncStatus('ok', '✅ تم حفظ المخزون الفعلي في Google Sheets ✓');
-            } catch (e) {
-                setSyncStatus('error', '❌ فشل حفظ المخزون!');
-            }
-        }
-
         // ================= دوال الملف الشخصي وتوليد لينكات الربط الفعلية الخاصة بالتاجر =================
         function renderMerchantProfileAndLinks() {
             document.getElementById('prof-card-store').innerText = currentMerchant.store;
@@ -1044,7 +1032,6 @@
             document.getElementById('prof-input-user').value = currentMerchant.user;
             document.getElementById('prof-input-pass').value = currentMerchant.pass || '123456';
 
-            // توليد لينكات الربط الفعلية المربوطة باللينك الثاني (OPS_DB)
             const opsBase = PRIME_CLOUD_URLS.OPS_DB;
             const egwUrl = `${opsBase}?merchant=${currentMerchant.code}&platform=egateway&store=${encodeURIComponent(currentMerchant.user)}`;
             const shopifyUrl = `${opsBase}?merchant=${currentMerchant.code}&platform=shopify&event=orders/create`;
@@ -1110,6 +1097,11 @@
 
         function contactAdminForProfileChange() {
             const msg = `مرحباً إدارة برايم، أنا التاجر (${currentMerchant.store} - كود #${currentMerchant.code})، أرغب في طلب تعديل بيان في ملفي الشخصي: `;
+            window.open(`https://wa.me/201000000000?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function contactAdminForStockSupply() {
+            const msg = `مرحباً إدارة مخازن برايم، أنا التاجر (${currentMerchant.store} - كود #${currentMerchant.code})، أرغب في التنسيق لإرسال دفعة بضاعة جديدة لاستلامها وإضافتها في مخزوني لديكم.`;
             window.open(`https://wa.me/201000000000?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
@@ -1257,29 +1249,6 @@
                     </div>
                     <div class="no-print p-4 border-t bg-slate-50 flex justify-end gap-2"><button onclick="closeModal('modal-awb')" class="px-4 py-2 rounded-xl bg-slate-200 font-bold">إغلاق</button><button onclick="printElement('awb-printable')" class="px-5 py-2 rounded-xl bg-brand text-white font-bold"><i class="fa-solid fa-print ml-1"></i> طباعة الفاتورة</button></div>
                 </div>
-            </div>
-
-            <div id="modal-stock-request" onclick="handleBackdropClick(event, 'modal-stock-request')" class="modal-backdrop fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-3 sm:p-4 z-50">
-                <div class="modal-card bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden text-xs">
-                    <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-extrabold text-sm"><i class="fa-solid fa-warehouse text-orange-500 ml-1"></i> إيداع منتج / تزويد بضاعة بالمخزن</h3><button onclick="closeModal('modal-stock-request')" class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold"><i class="fa-solid fa-xmark"></i></button></div>
-                    <div class="modal-body-scroll p-4 sm:p-6 space-y-3">
-                        <div><label class="font-bold block mb-1">اسم المنتج (بنفس الاسم في متجر E-Gateway) *</label><input id="stk-name" type="text" placeholder="مثال: تيشيرت أوفر سايز" class="w-full p-2.5 border rounded-xl font-bold"></div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="font-bold block mb-1">الكمية المرسلة للمخزن *</label><input id="stk-qty" type="number" value="50" class="w-full p-2.5 border rounded-xl font-black text-emerald-700"></div>
-                            <div>
-                                <label class="font-bold block mb-1">طبيعة المنتج</label>
-                                <select id="stk-fragile" class="w-full p-2.5 border rounded-xl bg-white font-bold">
-                                    <option value="عادي">منتج عادي</option>
-                                    <option value="قابل للكسر">منتج قابل للكسر</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500">
-                            <i class="fa-solid fa-circle-info text-brand ml-1"></i> يتم تسجيل المنتج بدون رسوم تغليف (0 ج.م)، ولا تُضاف أي رسوم تغليف إلا إذا حددتها إدارة المخزن للمنتجات التي تتطلب تغليفاً خاصاً.
-                        </div>
-                    </div>
-                    <div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button onclick="closeModal('modal-stock-request')" class="px-4 py-2 bg-slate-200 rounded-xl font-bold">إلغاء</button><button onclick="saveNewMerchantStock()" class="px-5 py-2 bg-orange-600 text-white rounded-xl font-bold shadow">إيداع وحفظ بالمخزن</button></div>
-                </div>
             </div>`;
         }
 
@@ -1355,7 +1324,9 @@
                 </tr>`;
             }).join('');
 
-            document.getElementById('overview-my-stock-list').innerHTML = myStock.map(w => `
+            document.getElementById('overview-my-stock-list').innerHTML = myStock.length === 0
+                ? `<div class="p-4 text-center text-slate-400 font-bold">لا توجد منتجات مسجلة باسم متجرك في المخزن حالياً</div>`
+                : myStock.map(w => `
                 <div class="p-3 rounded-xl bg-slate-50 border flex items-center justify-between">
                     <div>
                         <div class="font-extrabold text-slate-900">${w.name}</div>
@@ -1484,21 +1455,7 @@
             if (egatewayStoreOrders.length > 0) {
                 dispatchSingleEGWOrder(0);
             } else {
-                addSimulatedStoreOrder();
-                dispatchSingleEGWOrder(0);
-            }
-        }
-
-        function addSimulatedStoreOrder() {
-            const num = Math.floor(775 + Math.random() * 200);
-            egatewayStoreOrders.unshift({
-                storeOrderId: 'ORD-' + num, recipient: 'عمرو يوسف', phone: '01066778899',
-                gov: 'القاهرة', address: 'التجمع الخامس شارع التسعين الشمالي',
-                items: 'هودي أوفر سايز - عرض 7 قطع', prodPrice: 1350, freeShippingPromo: false, orderTime: 'الآن'
-            });
-            renderEGatewayPending();
-            if (document.getElementById('auto-dispatch-egw-cb')?.checked) {
-                dispatchSingleEGWOrder(0);
+                alert('جميع أوردرات متجرك على E-Gateway تم سحبها بالفعل إلى جدول الشحنات!');
             }
         }
 
@@ -1508,10 +1465,16 @@
             }
         }
 
+        // عرض المخزون للقراءة فقط (بدون أي أزرار تزويد أو إضافة من جهة التاجر)
         function renderMyWarehouse() {
             const myStock = getMyStock();
-            document.getElementById('my-warehouse-tbody').innerHTML = myStock.map(w => {
-                const realIdx = warehouseData.indexOf(w);
+            const tbody = document.getElementById('my-warehouse-tbody');
+            if (myStock.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-bold">لا توجد منتجات مسجلة باسم متجرك في مخازن الشركة حالياً (يتم إضافة الأصناف والكميات بواسطة إدارة الشركة بعد استلام البضاعة)</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = myStock.map(w => {
                 const packBadge = (w.packFee > 0)
                     ? `<span class="px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 font-extrabold text-[11px]">+${w.packFee} ج.م (مضاف من الشركة)</span>`
                     : `<span class="text-slate-400 font-semibold text-[11px]">بدون رسوم تغليف</span>`;
@@ -1522,22 +1485,10 @@
                     <td class="p-3.5"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${String(w.fragile).includes('كسر') ? 'bg-rose-100 text-rose-800' : 'bg-slate-100'}">${w.fragile}</span></td>
                     <td class="p-3.5">${packBadge}</td>
                     <td class="p-3.5"><span class="text-base font-black ${w.stock > 20 ? 'text-emerald-600' : 'text-rose-600'}">${w.stock} قطعة</span></td>
-                    <td class="p-3.5">${w.stock > 20 ? '<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-bold">متوفر وجاهز للتعبئة</span>' : '<span class="px-2 py-0.5 bg-rose-50 text-rose-700 rounded font-bold">رصيد منخفض</span>'}</td>
-                    <td class="p-3.5 text-center">
-                        <button onclick="const q=parseInt(prompt('اكتب عدد القطع الجديدة المرسلة للمخزن:', 50))||0; if(q>0){warehouseData[${realIdx}].stock+=q; renderAll(); pushToCoreDB();}" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-bold text-[11px]">+ إرسال دفعة توريد</button>
-                    </td>
+                    <td class="p-3.5">${w.stock > 20 ? '<span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold">متوفر بالمخزن ✓</span>' : '<span class="px-2.5 py-1 bg-rose-50 text-rose-700 rounded-lg font-bold">رصيد منخفض (يرجى التوريد للإدارة)</span>'}</td>
                 </tr>`;
             }).join('');
             document.getElementById('my-stock-datalist').innerHTML = myStock.map(w => `<option value="${w.name} - عرض 7 قطع"><option value="${w.name} - عرض 3 قطع"><option value="${w.name}">`).join('');
-        }
-
-        function saveNewMerchantStock() {
-            const name = document.getElementById('stk-name').value.trim();
-            const stock = parseInt(document.getElementById('stk-qty').value) || 0;
-            const fragile = document.getElementById('stk-fragile').value;
-            if (!name) return alert('اكتب اسم المنتج');
-            warehouseData.unshift({ sku: 'SKU-' + (101 + warehouseData.length), merchant: currentMerchant.store, name, fragile, packFee: 0, stock });
-            renderAll(); closeModal('modal-stock-request'); pushToCoreDB();
         }
 
         function renderMyFinanceSheet() {
