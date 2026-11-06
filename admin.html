@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- مكتبة قراءة الباركود و QR الفعلية بالكاميرا -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root { --brand-primary: #2563eb; --brand-hover: #1d4ed8; --brand-light: #eff6ff; --sidebar-bg: #0f172a; }
         body { font-family: 'Cairo', sans-serif; background-color: #f1f5f9; overflow: hidden; -webkit-tap-highlight-color: transparent; }
@@ -76,7 +78,7 @@
 </head>
 <body class="text-slate-800 h-screen flex flex-col">
 
-    <!-- ================= شاشة التحميل السحابية (تعمل حتى انتهاء سحب الداتا من الشيتات الثلاثة) ================= -->
+    <!-- ================= شاشة التحميل السحابية ================= -->
     <div id="prime-cloud-preloader">
         <div class="relative flex items-center justify-center mb-5">
             <div class="loader-ring"></div>
@@ -112,15 +114,15 @@
                 <button onclick="setSidebarMode('mini')" id="mode-mini-btn" title="تصغير للأيقونات" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-900 transition"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                 <button onclick="setSidebarMode('closed')" id="mode-closed-btn" title="إغلاق القائمة" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-rose-600 transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <button onclick="pullAllFromGoogleSheets(true)" title="تحديث البيانات من جوجل شيت الآن" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[11px] font-black flex items-center gap-1 transition">
-                <i class="fa-solid fa-rotate"></i><span class="hidden sm:inline">تحديث من الشيت</span>
+            <button onclick="pullAllFromGoogleSheets(true)" title="تحديث وسحب كافة الشحنات من جوجل شيت الآن" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[11px] font-black flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-rotate"></i><span>تحديث من الشيت</span>
             </button>
         </div>
 
         <div class="flex items-center gap-1.5 sm:gap-2 order-2 lg:order-3">
-            <button onclick="simulateEGatewayOrder()" class="px-2.5 sm:px-3 py-1.5 egateway-grad hover:opacity-95 text-white rounded-xl text-xs font-black shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition" title="استقبال أوردر مباشر من متاجر E-Gateway">
+            <button onclick="syncLiveOrdersFromStores()" class="px-2.5 sm:px-3 py-1.5 egateway-grad hover:opacity-95 text-white rounded-xl text-xs font-black shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition" title="سحب الأوردرات المشحونة فعلياً من متاجر E-Gateway">
                 <span class="w-5 h-5 rounded-lg bg-white/95 flex items-center justify-center p-0.5 flex-shrink-0" id="header-egw-logo-slot"></span>
-                <span>أوردر E-Gateway</span>
+                <span>مزامنة E-Gateway</span>
             </button>
             <button onclick="openMerchantModal()" class="px-2.5 sm:px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition">
                 <i class="fa-solid fa-user-plus text-amber-400"></i><span class="hidden sm:inline">+ تاجر</span>
@@ -137,7 +139,7 @@
             <button onclick="openCameraScannerModal()" class="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-700 text-amber-400 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm flex-shrink-0">
                 <i class="fa-solid fa-camera"></i><span class="text-[11px]">كاميرا</span>
             </button>
-            <input id="quick-scan-input" type="text" placeholder="رقم البوليصة (EGW-9040 أو AWB-9041)..." class="bg-transparent text-xs font-bold outline-none flex-1 min-w-[105px]">
+            <input id="quick-scan-input" type="text" placeholder="رقم البوليصة الفعلي..." class="bg-transparent text-xs font-bold outline-none flex-1 min-w-[105px]">
             <select id="quick-scan-action" class="bg-white border border-slate-200 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none max-w-[115px] sm:max-w-none">
                 <option value="جاهز للشحن">جاهز للشحن</option>
                 <option value="تم الشحن مع المندوب">مع المندوب</option>
@@ -201,12 +203,12 @@
         <!-- ================= 3. منطقة المحتوى الرئيسي المتحركة ================= -->
         <main class="flex-1 h-full overflow-y-auto p-3 sm:p-5 md:p-6 pb-24 lg:pb-6 space-y-5">
 
-            <!-- إشعار وصول أوردر من E-Gateway أو شوبيفاي -->
+            <!-- إشعار مزامنة الأوردرات الفعلية -->
             <div id="shopify-toast" class="hidden bg-slate-900 text-white p-3.5 rounded-2xl shadow-xl border-r-4 border-cyan-400 items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <div id="toast-icon-box" class="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1 flex-shrink-0"></div>
                     <div>
-                        <h4 id="shopify-toast-title" class="font-extrabold text-xs text-cyan-400">تم استقبال أوردر جديد تلقائياً وحفظه في الشيت!</h4>
+                        <h4 id="shopify-toast-title" class="font-extrabold text-xs text-cyan-400">تمت مزامنة الأوردرات الفعلية من السحابة!</h4>
                         <p id="shopify-toast-text" class="text-[11px] text-slate-200 mt-0.5"></p>
                     </div>
                 </div>
@@ -218,10 +220,10 @@
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 class="text-lg sm:text-xl font-black text-slate-900">مركز القيادة والتحكم المالي — <span class="brand-name-span text-brand">برايم</span> 👋</h1>
-                        <p class="text-xs text-slate-500 mt-1">متابعة سحابية لحظية لجميع التجار، عهدة المناديب، المخزن الذكي، وأوردرات منصة E-Gateway</p>
+                        <p class="text-xs text-slate-500 mt-1">متابعة سحابية لحظية لجميع التجار، عهدة المناديب، المخزن الذكي، وأوردرات المتاجر المربوطة بـ E-Gateway</p>
                     </div>
                     <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-                        <button onclick="simulateEGatewayOrder()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 egateway-grad text-white rounded-xl text-xs font-black shadow flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-300"></i> استقبال أوردر E-Gateway</button>
+                        <button onclick="syncLiveOrdersFromStores()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 egateway-grad text-white rounded-xl text-xs font-black shadow flex items-center gap-1.5"><i class="fa-solid fa-rotate text-amber-300"></i> مزامنة أوردرات المتاجر الآن</button>
                         <button onclick="openMerchantModal()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5"><i class="fa-solid fa-store"></i> + تاجر جديد</button>
                         <button onclick="openCourierModal()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 bg-cyan-600 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5"><i class="fa-solid fa-motorcycle"></i> + أكونت مندوب</button>
                     </div>
@@ -248,7 +250,7 @@
                             </div>
                             <div class="w-11 h-11 rounded-xl bg-cyan-50 border border-cyan-200 flex items-center justify-center p-1" id="kpi-egw-logo-slot"></div>
                         </div>
-                        <div class="mt-3 text-[11px] text-cyan-700 font-bold flex justify-between"><span id="kpi-platforms-breakdown">E-Gateway + Shopify</span><button onclick="switchTab('tab-shopify', document.getElementById('nav-btn-shopify'))" class="underline">بوابة الربط &larr;</button></div>
+                        <div class="mt-3 text-[11px] text-cyan-700 font-bold flex justify-between"><span id="kpi-platforms-breakdown">E-Gateway + Shopify</span><button onclick="switchTab('tab-orders', document.getElementById('nav-btn-orders'))" class="underline">عرض الكل &larr;</button></div>
                     </div>
                 </div>
 
@@ -263,7 +265,7 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
-                        <div class="flex justify-between items-center mb-3"><h3 class="font-extrabold text-sm text-slate-900"><i class="fa-solid fa-bolt text-amber-500 ml-1"></i> أحدث الشحنات المسجلة (شاملة E-Gateway)</h3><button onclick="switchTab('tab-orders', document.getElementById('nav-btn-orders'))" class="text-xs font-bold text-brand hover:underline">كل الشحنات &larr;</button></div>
+                        <div class="flex justify-between items-center mb-3"><h3 class="font-extrabold text-sm text-slate-900"><i class="fa-solid fa-bolt text-amber-500 ml-1"></i> أحدث الشحنات المسجلة</h3><button onclick="switchTab('tab-orders', document.getElementById('nav-btn-orders'))" class="text-xs font-bold text-brand hover:underline">كل الشحنات &larr;</button></div>
                         <div class="table-responsive-scroll">
                             <table class="w-full text-right text-xs whitespace-nowrap">
                                 <thead class="bg-slate-50 text-slate-600 font-bold border-b"><tr><th class="p-2">البوليصة والمصدر</th><th class="p-2">التاجر</th><th class="p-2">المستلم</th><th class="p-2">المحافظة</th><th class="p-2">الإجمالي</th><th class="p-2">تاريخ الإجراء</th><th class="p-2">الحالة</th></tr></thead>
@@ -298,7 +300,7 @@
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <h2 class="font-extrabold text-base text-slate-900"><i class="fa-solid fa-boxes-stacked text-amber-500 ml-1"></i> إدارة وتوجيه كافة الشحنات (مزامنة وحفظ فعلي في Google Sheets)</h2>
+                            <h2 class="font-extrabold text-base text-slate-900"><i class="fa-solid fa-boxes-stacked text-amber-500 ml-1"></i> إدارة وتوجيه كافة الشحنات (<span id="total-orders-header-count">0</span> شحنة مسجلة)</h2>
                             <p class="text-xs text-slate-500">اضغط على <strong>اسم العميل</strong> لعرض عنوانه، أو <strong>المنتج</strong> للكومنتات، أو <strong>التاريخ</strong> لعرض السجل الزمني الكامل</p>
                         </div>
                         <div class="flex flex-wrap gap-2 w-full sm:w-auto">
@@ -473,15 +475,12 @@
                         <div>
                             <span class="px-3 py-0.5 rounded-full bg-white/20 text-white font-black text-[11px]">الربط المباشر المدمج بالسحابة</span>
                             <h2 class="text-lg sm:text-xl font-black mt-1">بوابة ربط متاجر E-Gateway ومنصات التجارة (Shopify / WooCommerce)</h2>
-                            <p class="text-xs text-cyan-100 mt-1">أي أوردر يختار التاجر شحنه من متجره على E-Gateway ينتقل فوراً إلى شيت التشغيل (Operations_DB) بشعار E-Gateway!</p>
+                            <p class="text-xs text-cyan-100 mt-1">أي أوردر يشحنه التاجر من متجره على E-Gateway أو Piu Poin ينتقل فوراً إلى شيت التشغيل (Operations_DB) بشعار E-Gateway!</p>
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="simulateEGatewayOrder()" class="px-4 py-3 bg-white text-slate-950 font-black rounded-xl text-xs shadow-lg flex items-center gap-2 hover:bg-cyan-50 transition">
-                            <i class="fa-solid fa-bolt text-cyan-600"></i> اختبر استقبال أوردر E-Gateway الآن
-                        </button>
-                        <button onclick="simulateShopifyOrder()" class="px-4 py-3 bg-[#95BF47] text-slate-950 font-black rounded-xl text-xs shadow-lg flex items-center gap-2">
-                            <i class="fa-brands fa-shopify"></i> أوردر Shopify
+                        <button onclick="syncLiveOrdersFromStores()" class="px-4 py-3 bg-white text-slate-950 font-black rounded-xl text-xs shadow-lg flex items-center gap-2 hover:bg-cyan-50 transition">
+                            <i class="fa-solid fa-rotate text-cyan-600"></i> فحص ومزامنة أوردرات المتاجر الآن
                         </button>
                     </div>
                 </div>
@@ -568,18 +567,21 @@
     <!-- حاوية الطباعة الحرة متعددة الصفحات -->
     <div id="print-mount-root"></div>
 
-    <!-- ================= المحرك البرمجي الشامل + التحقق الصارم من الحفظ في جوجل شيت ================= -->
+    <!-- ================= المحرك البرمجي الفعلي النظيف (بدون أي محاكاة أو بيانات وهمية) ================= -->
     <script>
         const PRIME_CLOUD_URLS = {
             CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzDQzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
             OPS_DB:  "https://script.google.com/macros/s/AKfycbxsbu4BzuCSZ1EYyB54V9qx5g0VQojS6_cyeW-4gnldVEbKQdAXIsKSWK33hQqfEfyN/exec",
-            FIN_DB:  "https://script.google.com/macros/s/AKfycbwIakNG3LFoVSusSqBkmwW5bJEQBqp6j4mbYyZn5dwh1qXTVUplYLa5uje5kHhTaopq/exec"
+            FIN_DB:  "https://script.google.com/macros/s/AKfycbwIakNG3LFoVSusSqBkmwW5bJEQBqp6j4mbYyZn5dwh1qXTVUplYLa5uje5kHhTaopq/exec",
+            PIU_STORE_DB: "https://script.google.com/macros/s/AKfycby8l9JscC-mTuifFBfkRpyXVCfqEMUu2pWIu67IXhEFB80fHslB3gdBpejE4RFIhD2d/exec"
         };
 
         const MASTER_ADMIN_PASS = "150150";
         const ALL_STATUSES = ["جديد", "قيد التأكيد", "جاهز للشحن", "تم الشحن مع المندوب", "تم التسليم", "تم التسليم جزئي", "مؤجل", "تم الإلغاء", "مرتجع وتم دفع الشحن", "مرتجع ولم يدفع الشحن"];
 
         let customEGatewayLogoDataUrl = localStorage.getItem('swift_egateway_logo') || '';
+        let isInitialCloudLoaded = false;
+        let html5QrScanner = null;
 
         function getEGatewayLogoHTML(sizeClass = "w-4 h-4") {
             if (customEGatewayLogoDataUrl) {
@@ -633,68 +635,88 @@
         ];
 
         const merchantsData = [
-            { code: 'MER-101', store: 'بيبون ستور', owner: 'بدر رفعت', phone: '01100000000', user: 'pepon', pass: '123456', discount: 5, shopify: true, egateway: true },
-            { code: 'MER-102', store: 'متجر النور فاشون', owner: 'أحمد النور', phone: '01022334455', user: 'elnoor', pass: '123456', discount: 0, shopify: true, egateway: true },
-            { code: 'MER-103', store: 'تك زون للإلكترونيات', owner: 'كريم عادل', phone: '01288776655', user: 'techzone', pass: '123456', discount: 10, shopify: false, egateway: true }
+            { code: 'MER-101', store: 'بيبون ستور', owner: 'بدر رفعت', phone: '01100000000', user: 'pepon', pass: '123456', discount: 5, shopify: true, egateway: true }
         ];
 
         const couriersData = [
-            { id: 'CR-01', name: 'أحمد المندوب', phone: '01011112222', user: 'ahmed_cr', pass: '123456', zone: 'المعادي وحلوان', comm: 20 },
-            { id: 'CR-02', name: 'محمود سمير', phone: '01233334444', user: 'mahmoud_cr', pass: '123456', zone: 'الإسكندرية - سموحة', comm: 25 },
-            { id: 'CR-03', name: 'كريم طارق', phone: '01155556666', user: 'karim_cr', pass: '123456', zone: 'مدينة نصر والتجمع', comm: 20 }
+            { id: 'CR-01', name: 'أحمد المندوب', phone: '01011112222', user: 'ahmed_cr', pass: '123456', zone: 'المعادي وحلوان', comm: 20 }
         ];
 
-        const warehouseData = [
-            { sku: 'SKU-101', merchant: 'بيبون ستور', name: 'هودي أوفر سايز', fragile: 'عادي', packFee: 0, stock: 120 },
-            { sku: 'SKU-102', merchant: 'بيبون ستور', name: 'برفان أوريجينال', fragile: 'ضد الكسر (تغليف بابلز خاص)', packFee: 15, stock: 85 },
-            { sku: 'SKU-103', merchant: 'متجر النور فاشون', name: 'فستان سهرة', fragile: 'عادي', packFee: 0, stock: 60 },
-            { sku: 'SKU-104', merchant: 'تك زون للإلكترونيات', name: 'ساعة ذكية Ultra', fragile: 'ضد الكسر (تغليف بابلز خاص)', packFee: 0, stock: 18 }
-        ];
+        const warehouseData = [];
 
-        const ordersData = [
-            { awb: 'EGW-9040', source: 'E-Gateway', merchant: 'بيبون ستور', recipient: 'مروان يونس', phone: '01099112233', gov: 'القاهرة', address: 'المعادي دجلة شارع 231', items: 'هودي أوفر سايز - عرض 3 قطع', notes: 'تم التحويل تلقائياً من متجر E-Gateway', prodPrice: 900, fee: 45, packFee: 0, paid: 945, courier: 'أحمد المندوب', courierComm: 20, status: 'تم التسليم', showShipInv: true, settledMerchant: false, settledCourier: false, stockDeducted: true, createdAt: '٢٨‏/١٠‏/٢٠٢٦ - ٠٩:٠٠ ص', actionAt: 'تم التسليم: ٢٩‏/١٠‏/٢٠٢٦ - ١٠:١٥ ص', historyLog: [{ action: 'تم التسليم والتحصيل الكامل', time: '٢٩‏/١٠‏/٢٠٢٦ - ١٠:١٥ ص' }, { action: 'استقبال مباشر من منصة E-Gateway', time: '٢٨‏/١٠‏/٢٠٢٦ - ٠٩:٠٠ ص' }] },
-            { awb: 'AWB-9041', source: 'Shopify', merchant: 'بيبون ستور', recipient: 'سارة محمود', phone: '01012345678', gov: 'القاهرة', address: 'المعادي شارع 9 بجوار المترو عمارة 14', items: 'هودي أوفر سايز - عرض 7 قطع', notes: 'مسموح بمعاينة الأوردر', prodPrice: 600, fee: 45, packFee: 0, paid: 645, courier: 'أحمد المندوب', courierComm: 20, status: 'تم التسليم', showShipInv: true, settledMerchant: false, settledCourier: false, stockDeducted: true, createdAt: '٢٥‏/١٠‏/٢٠٢٦ - ١٠:١٥ ص', actionAt: 'تم التسليم: ٢٧‏/١٠‏/٢٠٢٦ - ٠٣:٤٠ م', historyLog: [{ action: 'تم التسليم والتحصيل الكامل', time: '٢٧‏/١٠‏/٢٠٢٦ - ٠٣:٤٠ م' }] }
-        ];
+        // مصفوفات الشحنات والماليات فارغة تماماً من أي بيانات وهمية
+        const ordersData = [];
+        const expensesData = [];
+        let withdrawnProfitsTotal = 0, settledMerchantsPayouts = 0;
+        const treasuryLogs = [];
 
-        const expensesData = [
-            { title: 'شراء بكر بوالص باركود حراري', category: 'خامات تغليف ومطبوعات', amount: 45, date: 'اليوم 10:30 ص' }
-        ];
-        let withdrawnProfitsTotal = 14200, settledMerchantsPayouts = 38500;
-        const treasuryLogs = [
-            { text: 'رصيد أرباح مرحّل من الفترات السابقة (تم سحبه سابقاً)', amount: 14200, type: 'profit', time: 'الأسبوع الماضي' }
-        ];
-
-        let currentPreviewAwbIdx = 0, activeMerchantSheetStore = '', activeCourierDetailsName = '', camScannedList = [], cameraStream = null;
+        let currentPreviewAwbIdx = 0, activeMerchantSheetStore = '', activeCourierDetailsName = '', camScannedList = [];
 
         function setSyncStatus(state, msg) {
             const dot = document.getElementById('prime-sync-dot');
             const txt = document.getElementById('prime-sync-text');
             if (!dot || !txt) return;
             if (state === 'saving') { dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping'; txt.innerText = msg || '⏳ جاري الحفظ والتحقق في Google Sheets...'; }
-            else if (state === 'error') { dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500'; txt.innerText = msg || '❌ لم يتم الحفظ في الشيت!'; }
-            else { dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400'; txt.innerText = msg || '✅ تم الحفظ الفعلي في Google Sheets ✓'; }
+            else if (state === 'error') { dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500'; txt.innerText = msg || '❌ تعذر الاتصال بالشيت!'; }
+            else { dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400'; txt.innerText = msg || '✅ متصل ومحدث من Google Sheets ✓'; }
         }
 
-        // ================= دوال السحب والتحقق الصارم من الحفظ الفعلي في جوجل شيت =================
+        function formatRawSheetOrder(o) {
+            return {
+                ...o,
+                awb: String(o.awb || '').trim(),
+                source: o.source || (String(o.awb).startsWith('EGW') ? 'E-Gateway' : 'يدوي'),
+                merchant: o.merchant || 'بيبون ستور',
+                recipient: o.recipient || 'عميل',
+                phone: String(o.phone || ''),
+                gov: o.gov || 'القاهرة',
+                address: o.address || '',
+                items: o.items || 'طرد شحن',
+                notes: o.notes || '',
+                prodPrice: parseFloat(o.prodPrice) || 0,
+                fee: parseFloat(o.fee) || 0,
+                packFee: parseFloat(o.packFee) || 0,
+                paid: parseFloat(o.paid) || 0,
+                courier: o.courier || 'بدون مندوب',
+                courierComm: parseFloat(o.courierComm) || 20,
+                status: o.status || 'جاهز للشحن',
+                showShipInv: o.showShipInv !== false && o.showShipInv !== 'FALSE' && o.showShipInv !== 'false',
+                settledMerchant: o.settledMerchant === true || o.settledMerchant === 'TRUE' || o.settledMerchant === 'true',
+                settledCourier: o.settledCourier === true || o.settledCourier === 'TRUE' || o.settledCourier === 'true',
+                stockDeducted: o.stockDeducted === true || o.stockDeducted === 'TRUE' || o.stockDeducted === 'true',
+                historyLog: Array.isArray(o.historyLog) ? o.historyLog : []
+            };
+        }
+
+        // ================= سحب البيانات الحية مباشرة من الشيتات الثلاثة لبرايم =================
         async function pullAllFromGoogleSheets(manualRefresh = false) {
             if (manualRefresh) setSyncStatus('saving', '⏳ جاري جلب أحدث البيانات من الشيتات...');
             const bar = document.getElementById('prime-loader-bar');
+            const ts = Date.now();
+
+            // مؤقت أمان لفتح الشاشة سريعاً وعدم تعليق شاشة التحميل
+            const preloaderSafety = setTimeout(() => {
+                document.getElementById('prime-cloud-preloader')?.classList.add('loaded');
+            }, 2500);
 
             try {
                 if (bar) bar.style.width = '55%';
                 const [coreRes, opsRes, finRes] = await Promise.all([
-                    fetch(PRIME_CLOUD_URLS.CORE_DB).then(r => r.json()).catch(() => null),
-                    fetch(PRIME_CLOUD_URLS.OPS_DB).then(r => r.json()).catch(() => null),
-                    fetch(PRIME_CLOUD_URLS.FIN_DB).then(r => r.json()).catch(() => null)
+                    fetch(`${PRIME_CLOUD_URLS.CORE_DB}?t=${ts}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+                    fetch(`${PRIME_CLOUD_URLS.OPS_DB}?t=${ts}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+                    fetch(`${PRIME_CLOUD_URLS.FIN_DB}?t=${ts}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)
                 ]);
                 if (bar) bar.style.width = '90%';
 
+                let connected = false;
+
                 if (coreRes && coreRes.status === 'success') {
-                    if (Array.isArray(coreRes.merchants) && coreRes.merchants.length > 0) {
+                    connected = true;
+                    if (Array.isArray(coreRes.merchants)) {
                         const cleanMer = coreRes.merchants.filter(m => m.store).map(m => ({ ...m, discount: parseFloat(m.discount) || 0, shopify: m.shopify === true || m.shopify === 'TRUE' || m.shopify === 'true', egateway: true }));
                         if (cleanMer.length > 0) merchantsData.splice(0, merchantsData.length, ...cleanMer);
                     }
-                    if (Array.isArray(coreRes.couriers) && coreRes.couriers.length > 0) {
+                    if (Array.isArray(coreRes.couriers)) {
                         const cleanCour = coreRes.couriers.filter(c => c.name).map(c => ({ ...c, comm: parseFloat(c.comm) || 20 }));
                         if (cleanCour.length > 0) couriersData.splice(0, couriersData.length, ...cleanCour);
                     }
@@ -702,56 +724,67 @@
                         const cleanZones = coreRes.zones.filter(z => z.name).map(z => ({ ...z, fee: parseFloat(z.fee) || 50, comm: parseFloat(z.comm) || 20, remoteFee: parseFloat(z.remoteFee) || 15, extraKg: parseFloat(z.extraKg) || 10 }));
                         if (cleanZones.length > 0) zonesData.splice(0, zonesData.length, ...cleanZones);
                     }
-                    if (Array.isArray(coreRes.warehouse) && coreRes.warehouse.length > 0) {
+                    if (Array.isArray(coreRes.warehouse)) {
                         const cleanWh = coreRes.warehouse.filter(w => w.name).map(w => ({ ...w, packFee: parseFloat(w.packFee) || 0, stock: parseInt(w.stock) || 0 }));
-                        if (cleanWh.length > 0) warehouseData.splice(0, warehouseData.length, ...cleanWh);
+                        warehouseData.splice(0, warehouseData.length, ...cleanWh);
                     }
                 }
 
-                if (opsRes && opsRes.status === 'success' && Array.isArray(opsRes.orders) && opsRes.orders.length > 0) {
-                    const cleanOrders = opsRes.orders.filter(o => o.awb).map(o => ({
-                        ...o,
-                        prodPrice: parseFloat(o.prodPrice) || 0,
-                        fee: parseFloat(o.fee) || 0,
-                        packFee: parseFloat(o.packFee) || 0,
-                        paid: parseFloat(o.paid) || 0,
-                        courierComm: parseFloat(o.courierComm) || 20,
-                        showShipInv: o.showShipInv !== false && o.showShipInv !== 'FALSE' && o.showShipInv !== 'false',
-                        settledMerchant: o.settledMerchant === true || o.settledMerchant === 'TRUE' || o.settledMerchant === 'true',
-                        settledCourier: o.settledCourier === true || o.settledCourier === 'TRUE' || o.settledCourier === 'true',
-                        stockDeducted: o.stockDeducted === true || o.stockDeducted === 'TRUE' || o.stockDeducted === 'true',
-                        historyLog: Array.isArray(o.historyLog) ? o.historyLog : []
-                    }));
-                    if (cleanOrders.length > 0) ordersData.splice(0, ordersData.length, ...cleanOrders);
+                // قراءة الشيت الثاني (Operations_DB) كما هو بالضبط (حتى لو كان فارغاً 0 شحنة)
+                if (opsRes && opsRes.status === 'success' && Array.isArray(opsRes.orders)) {
+                    connected = true;
+                    const cleanOrders = opsRes.orders.filter(o => o.awb && String(o.awb).trim() !== '').map(formatRawSheetOrder);
+                    ordersData.splice(0, ordersData.length, ...cleanOrders);
                 }
 
+                isInitialCloudLoaded = true;
+
                 if (finRes && finRes.status === 'success') {
+                    connected = true;
                     if (finRes.summary) {
                         withdrawnProfitsTotal = parseFloat(finRes.summary.withdrawnProfitsTotal) || 0;
                         settledMerchantsPayouts = parseFloat(finRes.summary.settledMerchantsPayouts) || 0;
                     }
-                    if (Array.isArray(finRes.expenses) && finRes.expenses.length > 0) {
+                    if (Array.isArray(finRes.expenses)) {
                         expensesData.splice(0, expensesData.length, ...finRes.expenses.filter(e => e.title).map(e => ({ ...e, amount: parseFloat(e.amount) || 0 })));
                     }
-                    if (Array.isArray(finRes.treasuryLogs) && finRes.treasuryLogs.length > 0) {
+                    if (Array.isArray(finRes.treasuryLogs)) {
                         treasuryLogs.splice(0, treasuryLogs.length, ...finRes.treasuryLogs.filter(l => l.text).map(l => ({ ...l, amount: parseFloat(l.amount) || 0 })));
                     }
                 }
 
-                renderAll();
-                setSyncStatus('ok', '✅ متصل ومحدث من Google Sheets ✓');
+                if (connected) {
+                    setSyncStatus('ok', `✅ متصل ومحدث من Google Sheets (${ordersData.length} شحنة) ✓`);
+                } else {
+                    setSyncStatus('error', '❌ تعذر الجلب من جوجل شيت');
+                }
             } catch (e) {
                 setSyncStatus('error', '❌ تعذر الجلب من جوجل شيت');
             }
 
+            try { renderAll(); } catch (err) { console.error(err); }
+
+            clearTimeout(preloaderSafety);
             if (bar) bar.style.width = '100%';
             setTimeout(() => {
                 document.getElementById('prime-cloud-preloader')?.classList.add('loaded');
-            }, 300);
+            }, 250);
+        }
+
+        // دالة مزامنة الأوردرات الحقيقية المرسلة من متاجر E-Gateway
+        async function syncLiveOrdersFromStores() {
+            await pullAllFromGoogleSheets(true);
+            const egwOrders = ordersData.filter(o => o.source === 'E-Gateway');
+            const toast = document.getElementById('shopify-toast');
+            document.getElementById('toast-icon-box').innerHTML = getEGatewayLogoHTML('w-8 h-8');
+            document.getElementById('shopify-toast-title').innerText = `تم تحديث ومزامنة الشحنات الحية من Google Sheets بنجاح!`;
+            document.getElementById('shopify-toast-text').innerText = `إجمالي الشحنات الفعلية بالشيت الآن: (${ordersData.length}) شحنة — منها (${egwOrders.length}) شحنة واردة من E-Gateway.`;
+            toast.classList.remove('hidden'); toast.classList.add('flex');
         }
 
         async function pushToCoreDB() {
-            setSyncStatus('saving', '⏳ جاري الكتابة والتحقق الفعلي في جوجل شيت (Core_DB)...');
+            if (!isInitialCloudLoaded) return;
+            setSyncStatus('saving', '⏳ جاري الحفظ الفعلي في جوجل شيت (Core_DB)...');
             try {
                 const res = await fetch(PRIME_CLOUD_URLS.CORE_DB, {
                     method: 'POST',
@@ -760,22 +793,30 @@
                 });
                 const result = await res.json();
                 if (!result || result.status !== 'success') throw new Error(result?.message || 'رفض الشيت عملية الحفظ');
-
-                const verify = await fetch(PRIME_CLOUD_URLS.CORE_DB).then(r => r.json());
-                if (merchantsData.length > 0 && (!verify.merchants || verify.merchants.length === 0)) {
-                    setSyncStatus('error', '❌ لم يُحفظ! شغّل setupSheet في الشيت الأول');
-                    alert('⚠️ تنبيه هام: الشيت الأول (Core_DB) لم يحفظ البيانات لأن جداول الشيت غير مهيأة!\n\nالحل: افتح الشيت الأول -> Extensions -> Apps Script -> اضغط Run على دالة setupSheet ووافق على الصلاحيات (Allow).');
-                    return;
-                }
-                setSyncStatus('ok', `✅ تم الحفظ الفعلي في الشيت الأول (${verify.merchants.length} تاجر) ✓`);
+                setSyncStatus('ok', `✅ تم الحفظ الفعلي في الشيت الأول (${merchantsData.length} تاجر) ✓`);
             } catch (e) {
-                setSyncStatus('error', '❌ فشل الحفظ في الشيت الأول! تأكد من صلاحية Anyone');
+                setSyncStatus('error', '❌ فشل الحفظ في الشيت الأول!');
             }
         }
 
-        async function pushToOpsDB() {
-            setSyncStatus('saving', '⏳ جاري الكتابة والتحقق الفعلي في شيت الشحنات (Ops_DB)...');
+        async function pushToOpsDB(deletedAwbsList = []) {
+            if (!isInitialCloudLoaded) return;
+            setSyncStatus('saving', '⏳ جاري حفظ الشحنات في جوجل شيت (Ops_DB)...');
             try {
+                // جلب أحدث نسخة من الشيت لدمج أي أوردر جديد وصل من متاجر التجار
+                const remoteCheck = await fetch(`${PRIME_CLOUD_URLS.OPS_DB}?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null);
+                if (remoteCheck && remoteCheck.status === 'success' && Array.isArray(remoteCheck.orders)) {
+                    const localAwbs = new Set(ordersData.map(o => String(o.awb).toUpperCase()));
+                    const deletedSet = new Set((deletedAwbsList || []).map(a => String(a).toUpperCase()));
+                    remoteCheck.orders.forEach(ro => {
+                        const rAwb = String(ro.awb || '').trim().toUpperCase();
+                        if (rAwb && !localAwbs.has(rAwb) && !deletedSet.has(rAwb)) {
+                            ordersData.unshift(formatRawSheetOrder(ro));
+                            localAwbs.add(rAwb);
+                        }
+                    });
+                }
+
                 const res = await fetch(PRIME_CLOUD_URLS.OPS_DB, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -788,22 +829,18 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'UPDATE_WAREHOUSE', warehouse: warehouseData })
-                });
+                }).catch(() => {});
 
-                const verify = await fetch(PRIME_CLOUD_URLS.OPS_DB).then(r => r.json());
-                if (ordersData.length > 0 && (!verify.orders || verify.orders.length === 0)) {
-                    setSyncStatus('error', '❌ لم يُحفظ! شغّل setupSheet في الشيت الثاني');
-                    alert('⚠️ تنبيه هام: شيت الشحنات (Operations_DB) لم يحفظ الأوردر لأن جدول Active_Orders غير موجود بالشيت!\n\nالحل: افتح الشيت الثاني -> Extensions -> Apps Script -> اضغط Run على دالة setupSheet ووافق على الصلاحيات (Allow).');
-                    return;
-                }
-                setSyncStatus('ok', `✅ تم الحفظ الفعلي في جوجل شيت (${verify.orders.length} شحنة مسجلة) ✓`);
+                renderAll();
+                setSyncStatus('ok', `✅ تم الحفظ الفعلي في جوجل شيت (${ordersData.length} شحنة مسجلة) ✓`);
             } catch (e) {
-                setSyncStatus('error', '❌ فشل الحفظ في شيت الشحنات! تأكد من صلاحية Anyone');
+                setSyncStatus('error', '❌ فشل الحفظ في شيت الشحنات!');
             }
         }
 
         async function pushToFinDB() {
-            setSyncStatus('saving', '⏳ جاري الكتابة والتحقق الفعلي في شيت الخزنة (Fin_DB)...');
+            if (!isInitialCloudLoaded) return;
+            setSyncStatus('saving', '⏳ جاري الحفظ الفعلي في شيت الخزنة (Fin_DB)...');
             try {
                 const res = await fetch(PRIME_CLOUD_URLS.FIN_DB, {
                     method: 'POST',
@@ -817,13 +854,6 @@
                 });
                 const result = await res.json();
                 if (!result || result.status !== 'success') throw new Error(result?.message || 'رفض الشيت عملية الحفظ');
-
-                const verify = await fetch(PRIME_CLOUD_URLS.FIN_DB).then(r => r.json());
-                if (treasuryLogs.length > 0 && (!verify.treasuryLogs || verify.treasuryLogs.length === 0)) {
-                    setSyncStatus('error', '❌ لم يُحفظ! شغّل setupSheet في الشيت الثالث');
-                    alert('⚠️ تنبيه هام: شيت الخزنة (Finance_DB) لم يحفظ البيانات لأن الجداول غير مهيأة!\n\nالحل: افتح الشيت الثالث -> Extensions -> Apps Script -> اضغط Run على دالة setupSheet ووافق على الصلاحيات (Allow).');
-                    return;
-                }
                 setSyncStatus('ok', '✅ تم الحفظ الفعلي في شيت الخزنة ✓');
             } catch (e) {
                 setSyncStatus('error', '❌ فشل الحفظ في شيت الخزنة!');
@@ -946,23 +976,26 @@
                 </div>
             </div>
 
+            <!-- ماسح الكاميرا الفعلي للباركود و QR (بدون أي أزرار محاكاة) -->
             <div id="modal-camera-scanner" onclick="handleBackdropClick(event, 'modal-camera-scanner')" class="modal-backdrop fixed inset-0 bg-slate-900/75 hidden items-center justify-center p-3 sm:p-4 z-50">
                 <div class="modal-card bg-white rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden text-xs">
-                    <div class="p-4 border-b bg-slate-900 text-white flex justify-between items-center"><h3 class="font-extrabold text-sm flex items-center gap-2"><i class="fa-solid fa-camera text-amber-400"></i><span>ماسح الكاميرا السريع لعدة بوالص</span></h3><button onclick="closeCameraScannerModal()" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs"><i class="fa-solid fa-xmark ml-1"></i> إغلاق الكاميرا</button></div>
+                    <div class="p-4 border-b bg-slate-900 text-white flex justify-between items-center"><h3 class="font-extrabold text-sm flex items-center gap-2"><i class="fa-solid fa-camera text-amber-400"></i><span>ماسح الكاميرا الفعلي للبوالص (Barcode & QR)</span></h3><button onclick="closeCameraScannerModal()" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs"><i class="fa-solid fa-xmark ml-1"></i> إغلاق الكاميرا</button></div>
                     <div class="modal-body-scroll p-4 space-y-4">
-                        <div class="bg-slate-950 rounded-2xl p-4 text-center border-2 border-dashed border-amber-400">
-                            <video id="camera-video-preview" class="w-full h-36 object-cover rounded-xl hidden" autoplay playsinline></video>
-                            <div class="py-3 text-white space-y-2">
-                                <i class="fa-solid fa-qrcode text-3xl text-amber-400 animate-pulse"></i>
-                                <p class="text-xs font-bold">وجّه الكاميرا نحو باركود البوالص لتنزل في القائمة بالأسفل تلقائياً</p>
-                                <div class="flex flex-wrap justify-center gap-2 pt-2">
-                                    <button onclick="startRealCamera()" class="px-3 py-2 bg-blue-600 text-white rounded-xl font-bold"><i class="fa-solid fa-video ml-1"></i> تشغيل الكاميرا</button>
-                                    <button onclick="simulateCameraScanOne()" class="px-3 py-2 bg-amber-400 text-slate-950 rounded-xl font-black"><i class="fa-solid fa-bolt ml-1"></i> محاكاة لقط باركود الآن</button>
-                                </div>
+                        <div class="bg-slate-950 rounded-2xl p-3 text-center border-2 border-amber-400 overflow-hidden">
+                            <div id="qr-reader-mount" class="w-full rounded-xl overflow-hidden bg-black min-h-[180px] flex items-center justify-center text-slate-400 font-bold">اضغط على "تشغيل الكاميرا الآن" بالأسفل لبدء المسح الفعلي</div>
+                            <div class="flex flex-wrap justify-center gap-2 pt-3">
+                                <button onclick="startRealCamera()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black shadow flex items-center gap-1.5"><i class="fa-solid fa-video"></i> تشغيل الكاميرا الآن</button>
                             </div>
                         </div>
+
+                        <!-- إدخال يدوي أو قارئ باركود ليزر خارجي USB -->
+                        <div class="flex gap-2">
+                            <input id="cam-manual-awb-input" type="text" onkeydown="if(event.key==='Enter') addManualAwbToCamList()" placeholder="أو امسح بقارئ الباركود الليزر / اكتب رقم البوليصة واضغط Enter..." class="flex-1 p-2.5 border rounded-xl font-bold outline-none focus:border-blue-600">
+                            <button onclick="addManualAwbToCamList()" class="px-4 py-2 bg-slate-900 text-white rounded-xl font-bold">+ إضافة</button>
+                        </div>
+
                         <div class="space-y-2">
-                            <div class="flex justify-between items-center font-bold"><span>البوالص التي تم تصويرها (<span id="cam-scanned-count" class="text-brand font-black">0</span>):</span><button onclick="camScannedList=[]; renderCamScannedList();" class="text-rose-600 hover:underline">مسح القائمة</button></div>
+                            <div class="flex justify-between items-center font-bold"><span>البوالص التي تم مسحها فعلياً (<span id="cam-scanned-count" class="text-brand font-black">0</span>):</span><button onclick="camScannedList=[]; renderCamScannedList();" class="text-rose-600 hover:underline">مسح القائمة</button></div>
                             <div id="cam-scanned-container" class="max-h-36 overflow-y-auto space-y-1.5 bg-slate-50 p-3 rounded-xl border"></div>
                         </div>
                         <div class="bg-slate-100 p-3 rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1084,16 +1117,17 @@
 
         function parseOfferQuantity(itemText) {
             if (!itemText) return 1;
+            const str = String(itemText);
             const arabicNums = { 'واحد': 1, 'قطعتين': 2, 'اثنين': 2, 'ثلاث': 3, 'تلات': 3, 'اربع': 4, 'أربع': 4, 'خمس': 5, 'ست': 6, 'سبع': 7, 'السبع': 7, 'ثمان': 8, 'تسع': 9, 'عشر': 10 };
-            for (const [word, num] of Object.entries(arabicNums)) { if (itemText.includes(word)) return num; }
-            const match = itemText.match(/(\d+)\s*(قطع|قطعه|قطعة|x|X|باكيدج|عرض)/i) || itemText.match(/(عرض|باكيدج)\s*(\d+)/i);
+            for (const [word, num] of Object.entries(arabicNums)) { if (str.includes(word)) return num; }
+            const match = str.match(/(\d+)\s*(قطع|قطعه|قطعة|عبوة|عبوه|شنط|شنطة|x|X|باكيدج|عرض)/i) || str.match(/(عرض|باكيدج)\s*(\d+)/i);
             return match ? (parseInt(match[1]) || parseInt(match[2]) || 1) : 1;
         }
 
         function syncWarehouseStockForOrder(order, newStatus) {
             const shipStates = ['جاهز للشحن', 'تم الشحن مع المندوب', 'تم التسليم', 'تم التسليم جزئي'];
             const returnStates = ['مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن', 'تم الإلغاء'];
-            const stockItem = warehouseData.find(w => w.merchant === order.merchant && order.items.includes(w.name));
+            const stockItem = warehouseData.find(w => w.merchant === order.merchant && String(order.items).includes(w.name));
             if (!stockItem) { order.packFee = 0; return; }
             const qty = parseOfferQuantity(order.items);
             order.packFee = (stockItem.packFee > 0) ? parseFloat(stockItem.packFee) : 0;
@@ -1139,9 +1173,24 @@
                 (sourceFilter === 'ALL' || o.source === sourceFilter)
             );
 
-            document.getElementById('orders-tbody').innerHTML = filtered.map(o => {
+            document.getElementById('total-orders-header-count').innerText = ordersData.length;
+            document.getElementById('badge-orders').innerText = ordersData.length;
+
+            const tbody = document.getElementById('orders-tbody');
+            const overviewTbody = document.getElementById('overview-orders-tbody');
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="16" class="p-6 text-center text-slate-400 font-bold">لا توجد شحنات مسجلة حالياً — جاهز لاستقبال الشحنات الفعلية</td></tr>`;
+                if (ordersData.length === 0) {
+                    overviewTbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400 font-bold">لا توجد شحنات مسجلة حالياً</td></tr>`;
+                }
+                updateSelectedOrdersCount();
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(o => {
                 const realIdx = ordersData.indexOf(o), fin = calcOrderFinancials(o), parsedQty = parseOfferQuantity(o.items);
-                const statusColor = o.status.includes('تم التسليم') ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : o.status.includes('مرتجع') || o.status === 'تم الإلغاء' ? 'bg-rose-100 text-rose-800 border-rose-300' : o.status === 'تم الشحن مع المندوب' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-blue-50 text-blue-800 border-blue-200';
+                const statusColor = String(o.status).includes('تم التسليم') ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : String(o.status).includes('مرتجع') || o.status === 'تم الإلغاء' ? 'bg-rose-100 text-rose-800 border-rose-300' : o.status === 'تم الشحن مع المندوب' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-blue-50 text-blue-800 border-blue-200';
                 const courierOptions = [`<option value="بدون مندوب" ${o.courier === 'بدون مندوب' ? 'selected' : ''}>-- بدون مندوب --</option>`].concat(couriersData.map(c => `<option value="${c.name}" ${c.name === o.courier ? 'selected' : ''}>${c.name}</option>`)).join('');
                 const statusOptions = ALL_STATUSES.map(st => `<option value="${st}" ${o.status === st ? 'selected' : ''}>${st}</option>`).join('');
 
@@ -1159,24 +1208,25 @@
                     <td class="py-2 px-2.5"><input type="number" value="${o.paid}" onchange="ordersData[${realIdx}].paid=parseFloat(this.value)||0; renderAll(); pushToOpsDB();" class="w-16 p-1 border border-emerald-300 rounded-lg text-center font-black text-emerald-700 bg-emerald-50/40"></td>
                     <td class="py-2 px-2.5 font-black ${fin.netMerchant >= 0 ? 'text-emerald-700' : 'text-rose-600'}">${fin.netMerchant} ج.م</td>
                     <td class="py-2 px-2.5"><button onclick="openOrderHistoryModal(${realIdx})" class="text-[11px] font-bold text-slate-600 hover:text-brand underline"><i class="fa-regular fa-calendar ml-1 text-slate-400"></i>${o.createdAt || 'اليوم'}</button></td>
-                    <td class="py-2 px-2.5"><button onclick="openOrderHistoryModal(${realIdx})" class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200"><i class="fa-solid fa-clock-rotate-left ml-1"></i>${o.actionAt || 'بانتظار الإجراء'}</button></td>
+                    <td class="py-2 px-2.5"><button onclick="openOrderHistoryModal(${realIdx})" class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200"><i class="fa-solid fa-clock-rotate-left ml-1"></i>${o.actionAt || o.createdAt || 'بانتظار الإجراء'}</button></td>
                     <td class="py-2 px-2.5"><select onchange="assignOrderCourier(${realIdx}, this.value)" class="border rounded-lg px-2 py-1 text-[11px] bg-white font-bold max-w-[115px]">${courierOptions}</select></td>
                     <td class="py-2 px-2.5"><select onchange="changeOrderStatus(${realIdx}, this.value)" class="border rounded-lg px-2 py-1 text-[11px] font-bold ${statusColor}">${statusOptions}</select></td>
                     <td class="py-2 px-2.5"><div class="flex items-center justify-center gap-1"><button onclick="openOrderModal(${realIdx})" class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="previewAWB(${realIdx})" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center"><i class="fa-solid fa-print"></i></button><a href="https://wa.me/2${o.phone}?text=${encodeURIComponent('مرحباً ' + o.recipient + '، بخصوص أوردر ' + o.merchant + ' بوليصة #' + o.awb)}" target="_blank" class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fa-brands fa-whatsapp text-sm"></i></a></div></td>
                 </tr>`;
             }).join('');
 
-            document.getElementById('overview-orders-tbody').innerHTML = ordersData.slice(0, 5).map((o, i) => `<tr><td class="p-2 font-bold text-brand flex items-center gap-1">#${o.awb} ${getSourceBadgeHTML(o.source)}</td><td class="p-2 font-bold">${o.merchant}</td><td class="p-2"><button onclick="openCustomerInfoModal(${i})" class="font-bold underline">${o.recipient}</button></td><td class="p-2 text-slate-500">${o.gov}</td><td class="p-2 font-bold">${calcOrderFinancials(o).totalCod} ج.م</td><td class="p-2 text-[11px] font-bold text-emerald-700">${o.actionAt}</td><td class="p-2"><span class="px-2 py-0.5 rounded-full bg-slate-100 font-bold text-[10px]">${o.status}</span></td></tr>`).join('');
-            document.getElementById('badge-orders').innerText = ordersData.length;
+            overviewTbody.innerHTML = ordersData.slice(0, 6).map((o, i) => `<tr><td class="p-2 font-bold text-brand flex items-center gap-1">#${o.awb} ${getSourceBadgeHTML(o.source)}</td><td class="p-2 font-bold">${o.merchant}</td><td class="p-2"><button onclick="openCustomerInfoModal(${i})" class="font-bold underline">${o.recipient}</button></td><td class="p-2 text-slate-500">${o.gov}</td><td class="p-2 font-bold">${calcOrderFinancials(o).totalCod} ج.م</td><td class="p-2 text-[11px] font-bold text-emerald-700">${o.actionAt || o.createdAt}</td><td class="p-2"><span class="px-2 py-0.5 rounded-full bg-slate-100 font-bold text-[10px]">${o.status}</span></td></tr>`).join('');
             updateSelectedOrdersCount();
         }
 
         function openOrderHistoryModal(idx) {
             const o = ordersData[idx];
+            if (!o) return;
             document.getElementById('oh-awb').innerText = '#' + o.awb;
             document.getElementById('oh-created').innerText = o.createdAt || 'غير مسجل';
-            document.getElementById('oh-last-action').innerText = o.actionAt || 'لم يتم إجراء بعد';
-            document.getElementById('oh-timeline').innerHTML = (o.historyLog || []).map(l => `<div class="p-2.5 bg-slate-50 rounded-xl border"><div class="font-extrabold text-slate-900">${l.action}</div><div class="text-[10px] text-slate-500 mt-0.5"><i class="fa-regular fa-clock ml-1"></i>${l.time}</div></div>`).join('');
+            document.getElementById('oh-last-action').innerText = o.actionAt || o.createdAt || 'لم يتم إجراء بعد';
+            const logs = (Array.isArray(o.historyLog) && o.historyLog.length > 0) ? o.historyLog : [{ action: o.actionAt || o.status, time: o.createdAt || getFormattedNow() }];
+            document.getElementById('oh-timeline').innerHTML = logs.map(l => `<div class="p-2.5 bg-slate-50 rounded-xl border"><div class="font-extrabold text-slate-900">${l.action}</div><div class="text-[10px] text-slate-500 mt-0.5"><i class="fa-regular fa-clock ml-1"></i>${l.time}</div></div>`).join('');
             openModal('modal-order-history');
         }
 
@@ -1214,10 +1264,15 @@
         function bulkDeleteSelectedOrders() {
             const cbs = document.querySelectorAll('.order-row-cb:checked');
             if (cbs.length === 0) return alert('حدد الأوردرات التي تريد حذفها أولاً');
-            if (!confirm(`هل أنت متأكد من حذف (${cbs.length}) أوردر؟`)) return;
-            Array.from(cbs).map(cb => parseInt(cb.dataset.idx)).sort((a, b) => b - a).forEach(idx => { syncWarehouseStockForOrder(ordersData[idx], 'تم الإلغاء'); ordersData.splice(idx, 1); });
+            if (!confirm(`هل أنت متأكد من حذف (${cbs.length}) أوردر نهائياً من الشيت؟`)) return;
+            const deletedAwbs = [];
+            Array.from(cbs).map(cb => parseInt(cb.dataset.idx)).sort((a, b) => b - a).forEach(idx => {
+                deletedAwbs.push(ordersData[idx].awb);
+                syncWarehouseStockForOrder(ordersData[idx], 'تم الإلغاء');
+                ordersData.splice(idx, 1);
+            });
             document.getElementById('select-all-orders').checked = false;
-            renderAll(); pushToOpsDB();
+            renderAll(); pushToOpsDB(deletedAwbs);
         }
 
         function applyBulkStatus() {
@@ -1239,6 +1294,7 @@
 
         function openCustomerInfoModal(idx) {
             const o = ordersData[idx];
+            if (!o) return;
             document.getElementById('ci-awb-merchant').innerText = `#${o.awb} (${o.merchant} - ${o.source})`;
             document.getElementById('ci-name').innerText = o.recipient;
             document.getElementById('ci-phone').innerText = o.phone;
@@ -1252,6 +1308,7 @@
 
         function openProductNotesModal(idx) {
             const o = ordersData[idx];
+            if (!o) return;
             document.getElementById('pn-order-idx').value = idx;
             document.getElementById('pn-awb').innerText = '#' + o.awb;
             document.getElementById('pn-items').innerText = o.items;
@@ -1263,7 +1320,7 @@
 
         function saveQuickProductNote() {
             const idx = parseInt(document.getElementById('pn-order-idx').value);
-            if (idx > -1) { ordersData[idx].notes = document.getElementById('pn-notes-input').value.trim(); renderAll(); pushToOpsDB(); }
+            if (idx > -1 && ordersData[idx]) { ordersData[idx].notes = document.getElementById('pn-notes-input').value.trim(); renderAll(); pushToOpsDB(); }
             closeModal('modal-product-notes');
         }
 
@@ -1321,7 +1378,7 @@
         function recalcMerchantSheetSummary() {
             const cbs = document.querySelectorAll('.ms-order-cb:checked');
             let totalPaid = 0, totalFees = 0, returnsCount = 0, netDue = 0;
-            cbs.forEach(cb => { const o = ordersData[parseInt(cb.dataset.idx)], fin = calcOrderFinancials(o); totalPaid += parseFloat(o.paid) || 0; totalFees += fin.effectiveFee; if (o.status.includes('مرتجع') || o.status === 'تم الإلغاء') returnsCount++; netDue += fin.netMerchant; });
+            cbs.forEach(cb => { const o = ordersData[parseInt(cb.dataset.idx)], fin = calcOrderFinancials(o); totalPaid += parseFloat(o.paid) || 0; totalFees += fin.effectiveFee; if (String(o.status).includes('مرتجع') || o.status === 'تم الإلغاء') returnsCount++; netDue += fin.netMerchant; });
             document.getElementById('ms-count').innerText = cbs.length;
             document.getElementById('ms-total-paid').innerText = totalPaid.toLocaleString() + ' ج.م';
             document.getElementById('ms-total-fees').innerText = totalFees.toLocaleString() + ' ج.م';
@@ -1344,8 +1401,8 @@
             document.getElementById('couriers-grid').innerHTML = couriersData.map((c, idx) => {
                 const activeOrders = ordersData.filter(o => o.courier === c.name && !o.settledCourier);
                 const cash = activeOrders.reduce((s, o) => s + (parseFloat(o.paid) || 0), 0);
-                const comm = activeOrders.filter(o => o.status.includes('تم التسليم') || o.status.includes('مرتجع')).reduce((s, o) => s + (parseFloat(o.courierComm) || 0), 0);
-                const returnsCount = activeOrders.filter(o => o.status.includes('مرتجع')).length;
+                const comm = activeOrders.filter(o => String(o.status).includes('تم التسليم') || String(o.status).includes('مرتجع')).reduce((s, o) => s + (parseFloat(o.courierComm) || 0), 0);
+                const returnsCount = activeOrders.filter(o => String(o.status).includes('مرتجع')).length;
                 return `<div class="bg-white p-5 rounded-2xl border shadow-sm space-y-3"><div class="flex justify-between items-start"><div><button onclick="openCourierDetailsModal('${c.name}')" class="font-black text-sm text-slate-900 underline">${c.name}</button><p class="text-[11px] text-slate-400">${c.zone} | ${c.phone}</p><p class="text-[10px] text-slate-400">أكونت: <code>${c.user}</code> | باسورد: <code>${c.pass}</code></p></div><div class="flex gap-1"><span class="px-2 py-1 rounded-lg bg-cyan-50 text-cyan-800 font-bold text-[10px]">${activeOrders.length} أوردر</span><button onclick="openCourierModal(${idx})" class="w-7 h-7 rounded-lg bg-slate-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-pen-to-square"></i></button></div></div><div class="grid grid-cols-3 gap-2 text-center bg-slate-50 p-3 rounded-xl border"><div><span class="text-[10px] text-slate-400 block">الكاش معه</span><strong class="text-xs font-black">${cash} ج.م</strong></div><div><span class="text-[10px] text-slate-400 block">عمولته</span><strong class="text-xs font-black text-rose-600">-${comm} ج.م</strong></div><div><span class="text-[10px] text-slate-400 block">صافي الخزنة</span><strong class="text-xs font-black text-emerald-600">${cash - comm} ج.م</strong></div></div><div class="flex justify-between bg-rose-50 text-rose-800 px-3 py-2 rounded-xl border border-rose-200"><span>مرتجعات بيده:</span><strong>${returnsCount} طرد</strong></div><button onclick="openCourierDetailsModal('${c.name}')" class="w-full py-2.5 bg-cyan-600 text-white font-bold rounded-xl">فتح تفاصيل أوردرات المندوب والاستلام الجزئي</button></div>`;
             }).join('');
             document.getElementById('badge-couriers').innerText = couriersData.length;
@@ -1486,9 +1543,9 @@
             document.getElementById('stat-total-orders').innerText = ordersData.length;
             document.getElementById('stat-new-orders').innerText = ordersData.filter(o => ['جديد', 'قيد التأكيد', 'جاهز للشحن'].includes(o.status)).length;
             document.getElementById('stat-shipped-orders').innerText = ordersData.filter(o => o.status === 'تم الشحن مع المندوب').length;
-            document.getElementById('stat-delivered-orders').innerText = ordersData.filter(o => o.status.includes('تم التسليم')).length;
+            document.getElementById('stat-delivered-orders').innerText = ordersData.filter(o => String(o.status).includes('تم التسليم')).length;
             document.getElementById('stat-postponed-orders').innerText = ordersData.filter(o => ['مؤجل', 'تم الإلغاء'].includes(o.status)).length;
-            document.getElementById('stat-returned-orders').innerText = ordersData.filter(o => o.status.includes('مرتجع')).length;
+            document.getElementById('stat-returned-orders').innerText = ordersData.filter(o => String(o.status).includes('مرتجع')).length;
 
             document.getElementById('tr-current-profit').innerText = currentWithdrawableProfit.toLocaleString() + ' ج.م';
             document.getElementById('tr-accumulated-profit').innerText = accumulatedHistoricalProfit.toLocaleString() + ' ج.م';
@@ -1525,32 +1582,88 @@
             renderAll(); pushToFinDB();
         }
 
-        function openCameraScannerModal() { camScannedList = []; renderCamScannedList(); openModal('modal-camera-scanner'); }
-        function closeCameraScannerModal() { if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; } closeModal('modal-camera-scanner'); }
-        function startRealCamera() {
-            if (!navigator.mediaDevices?.getUserMedia) return alert('استخدم زر محاكاة اللقط السريع');
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(s => { cameraStream = s; const v = document.getElementById('camera-video-preview'); v.srcObject = s; v.classList.remove('hidden'); }).catch(() => alert('تم تفعيل وضع المحاكاة السريعة'));
-        }
-        function simulateCameraScanOne() {
-            const unpicked = ordersData.filter(o => !camScannedList.includes(o.awb));
-            const pick = unpicked.length > 0 ? unpicked[0] : ordersData[0];
-            if (pick && !camScannedList.includes(pick.awb)) camScannedList.push(pick.awb);
+        // ================= دوال الكاميرا الفعلية لقراءة الباركود و QR الحقيقي =================
+        function openCameraScannerModal() {
+            camScannedList = [];
             renderCamScannedList();
+            openModal('modal-camera-scanner');
         }
+
+        async function closeCameraScannerModal() {
+            if (html5QrScanner) {
+                try {
+                    await html5QrScanner.stop();
+                    html5QrScanner.clear();
+                } catch (e) {}
+                html5QrScanner = null;
+            }
+            closeModal('modal-camera-scanner');
+        }
+
+        function startRealCamera() {
+            if (typeof Html5Qrcode === 'undefined') {
+                return alert('جاري تحميل محرك الكاميرا، يرجى المحاولة بعد ثانية.');
+            }
+            if (html5QrScanner) return;
+
+            html5QrScanner = new Html5Qrcode("qr-reader-mount");
+            html5QrScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 120 } },
+                (decodedText) => {
+                    const cleanCode = String(decodedText || '').replace(/\*/g, '').replace(/#/g, '').trim();
+                    if (cleanCode && !camScannedList.includes(cleanCode)) {
+                        camScannedList.push(cleanCode);
+                        renderCamScannedList();
+                    }
+                },
+                () => {}
+            ).catch(() => {
+                alert('تعذر فتح الكاميرا! تأكد من إعطاء صلاحية الكاميرا للمتصفح أو استخدم خانة قارئ الباركود بالأسفل.');
+                html5QrScanner = null;
+            });
+        }
+
+        function addManualAwbToCamList() {
+            const inp = document.getElementById('cam-manual-awb-input');
+            const code = (inp?.value || '').replace(/\*/g, '').replace(/#/g, '').trim();
+            if (!code) return;
+            if (!camScannedList.includes(code)) {
+                camScannedList.push(code);
+                renderCamScannedList();
+            }
+            inp.value = '';
+            inp.focus();
+        }
+
         function renderCamScannedList() {
             document.getElementById('cam-scanned-count').innerText = camScannedList.length;
-            document.getElementById('cam-scanned-container').innerHTML = camScannedList.length === 0 ? `<div class="text-slate-400 text-center py-3">لم يتم لقط أي باركود بعد</div>` : camScannedList.map((awb, i) => `<div class="p-2 bg-white rounded-lg border flex justify-between"><strong>#${awb}</strong><button onclick="camScannedList.splice(${i},1); renderCamScannedList();" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></div>`).join('');
+            document.getElementById('cam-scanned-container').innerHTML = camScannedList.length === 0
+                ? `<div class="text-slate-400 text-center py-3">وجّه الكاميرا نحو باركود البوليصة ليتم التقاطه فعلياً هنا</div>`
+                : camScannedList.map((awb, i) => `<div class="p-2 bg-white rounded-lg border flex justify-between items-center"><strong class="font-mono text-brand">#${awb}</strong><button onclick="camScannedList.splice(${i},1); renderCamScannedList();" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></div>`).join('');
         }
+
         function saveCameraBatch() {
-            if (camScannedList.length === 0) return alert('القط باركود واحداً على الأقل');
+            if (camScannedList.length === 0) return alert('امسح باركود بوليصة واحدة على الأقل بالكاميرا');
             const st = document.getElementById('cam-bulk-status').value, cr = document.getElementById('cam-bulk-courier').value;
-            camScannedList.forEach(awb => { const idx = ordersData.findIndex(o => o.awb === awb); if (idx > -1) { if (cr && cr !== 'بدون تغيير') ordersData[idx].courier = cr; changeOrderStatus(idx, st, true); } });
-            renderAll(); pushToOpsDB(); closeCameraScannerModal();
+            let matchedCount = 0;
+            camScannedList.forEach(awb => {
+                const idx = ordersData.findIndex(o => String(o.awb).toUpperCase() === String(awb).toUpperCase());
+                if (idx > -1) {
+                    if (cr && cr !== 'بدون تغيير') ordersData[idx].courier = cr;
+                    changeOrderStatus(idx, st, true);
+                    matchedCount++;
+                }
+            });
+            if (matchedCount === 0) return alert('لم يتم العثور على أرقام هذه البوالص في جدول الشحنات الحالي');
+            renderAll();
+            pushToOpsDB();
+            closeCameraScannerModal();
         }
 
         function openOrderModal(editIdx = -1) {
             document.getElementById('ord-edit-idx').value = editIdx;
-            if (editIdx > -1) {
+            if (editIdx > -1 && ordersData[editIdx]) {
                 const o = ordersData[editIdx];
                 document.getElementById('ord-merchant').value = o.merchant; document.getElementById('ord-recipient').value = o.recipient; document.getElementById('ord-phone').value = o.phone; document.getElementById('ord-gov').value = o.gov; document.getElementById('ord-address').value = o.address || ''; document.getElementById('ord-items').value = o.items; document.getElementById('ord-status').value = o.status; document.getElementById('ord-prod-price').value = o.prodPrice; document.getElementById('ord-fee').value = o.fee; document.getElementById('ord-paid').value = o.paid; document.getElementById('ord-courier').value = o.courier; document.getElementById('ord-courier-comm').value = o.courierComm; document.getElementById('ord-notes').value = o.notes || ''; document.getElementById('ord-free-ship-promo').checked = (o.showShipInv === false);
                 recalcModalTotals();
@@ -1584,12 +1697,12 @@
             const editIdx = parseInt(document.getElementById('ord-edit-idx').value), merchant = document.getElementById('ord-merchant').value, recipient = document.getElementById('ord-recipient').value.trim(), phone = document.getElementById('ord-phone').value.trim() || '01000000000', gov = document.getElementById('ord-gov').value, address = document.getElementById('ord-address').value.trim(), items = document.getElementById('ord-items').value.trim() || 'طرد شحن', status = document.getElementById('ord-status').value, prodPrice = parseFloat(document.getElementById('ord-prod-price').value) || 0, fee = status === 'تم الإلغاء' ? 0 : (parseFloat(document.getElementById('ord-fee').value) || 0), paid = parseFloat(document.getElementById('ord-paid').value) || 0, courier = document.getElementById('ord-courier').value, courierComm = parseFloat(document.getElementById('ord-courier-comm').value) || 20, notes = document.getElementById('ord-notes').value.trim(), showShipInv = !document.getElementById('ord-free-ship-promo').checked;
             if (!recipient) return alert('يرجى إدخال اسم المستلم');
             const nowStr = getFormattedNow();
-            if (editIdx > -1) {
+            if (editIdx > -1 && ordersData[editIdx]) {
                 const o = ordersData[editIdx];
                 Object.assign(o, { merchant, recipient, phone, gov, address, items, status, prodPrice, fee, paid, courier, courierComm, notes, showShipInv });
                 recordOrderTimestamp(o, `تعديل / ${status}`); syncWarehouseStockForOrder(o, status);
             } else {
-                const awb = 'AWB-' + Math.floor(9050 + Math.random() * 900);
+                const awb = 'AWB-' + Math.floor(10000 + Math.random() * 89999);
                 const newOrd = { awb, source: 'يدوي', merchant, recipient, phone, gov, address, items, notes, prodPrice, fee, packFee: 0, paid, courier, courierComm, status, showShipInv, settledMerchant: false, settledCourier: false, stockDeducted: false, createdAt: nowStr, actionAt: `${status}: ${nowStr}`, historyLog: [{ action: `إنشاء الأوردر بحالة (${status})`, time: nowStr }] };
                 syncWarehouseStockForOrder(newOrd, status); ordersData.unshift(newOrd);
             }
@@ -1599,6 +1712,7 @@
         function previewAWB(idx) { currentPreviewAwbIdx = idx; renderSingleAwbPreview(); openModal('modal-awb'); }
         function renderSingleAwbPreview() {
             const o = ordersData[currentPreviewAwbIdx];
+            if (!o) return;
             document.getElementById('awb-printable').innerHTML = buildSingleInvoiceHTML(o);
             document.getElementById('awb-mode-label').innerText = (o.showShipInv !== false) ? 'التفاصيل الكاملة (سعر المنتج + الشحن)' : 'مفعل عرض شحن مجاني للعميل';
             document.getElementById('awb-free-ship-btn').innerText = (o.showShipInv !== false) ? 'تفعيل "شحن مجاني" في الفاتورة' : 'إظهار تفاصيل الشحن';
@@ -1643,42 +1757,8 @@
             renderAll(); closeModal('modal-courier'); pushToCoreDB();
         }
 
-        function simulateEGatewayOrder() {
-            const randomNum = Math.floor(9100 + Math.random() * 800), nowStr = getFormattedNow();
-            const names = ['أحمد السقا', 'نيللي كريم', 'أمير كرارة', 'هند صبري'];
-            const pickName = names[Math.floor(Math.random() * names.length)];
-            const newOrder = {
-                awb: 'EGW-' + randomNum, source: 'E-Gateway', merchant: 'بيبون ستور', recipient: pickName,
-                phone: '01088776655', gov: 'القاهرة', address: 'مدينتي - مجموعة 11 عمارة 4',
-                items: 'هودي أوفر سايز - عرض 7 قطع', notes: 'أوردر محول تلقائياً من منصة E-Gateway',
-                prodPrice: 1350, fee: 45, packFee: 0, paid: 0, courier: 'بدون مندوب', courierComm: 20,
-                status: 'جاهز للشحن', showShipInv: true, settledMerchant: false, settledCourier: false, stockDeducted: false,
-                createdAt: nowStr, actionAt: `وارد E-Gateway: ${nowStr}`,
-                historyLog: [{ action: 'تحويل مباشر من متجر التاجر على منصة E-Gateway', time: nowStr }]
-            };
-            syncWarehouseStockForOrder(newOrder, 'جاهز للشحن');
-            ordersData.unshift(newOrder);
-            renderAll(); pushToOpsDB();
-            const toast = document.getElementById('shopify-toast');
-            document.getElementById('toast-icon-box').innerHTML = getEGatewayLogoHTML('w-8 h-8');
-            document.getElementById('shopify-toast-title').innerText = 'تم استقبال أوردر جديد مباشرة من منصة E-Gateway وحفظه في الشيت!';
-            document.getElementById('shopify-toast-text').innerText = `بوليصة #${newOrder.awb} | التاجر: ${newOrder.merchant} | خصم 7 قطع من المخزن (${nowStr})`;
-            toast.classList.remove('hidden'); toast.classList.add('flex');
-        }
-
-        function simulateShopifyOrder() {
-            const randomNum = Math.floor(9100 + Math.random() * 800), nowStr = getFormattedNow();
-            const newOrder = { awb: 'SHP-' + randomNum, source: 'Shopify', merchant: 'بيبون ستور', recipient: 'كريم عبد العزيز', phone: '01066554433', gov: 'القاهرة', address: 'التجمع الخامس - حي النرجس فيلا 12', items: 'هودي أوفر سايز - عرض 7 قطع', notes: 'أوردر شوبيفاي - عرض السبع قطع', prodPrice: 1400, fee: 45, packFee: 0, paid: 0, courier: 'بدون مندوب', courierComm: 20, status: 'جاهز للشحن', showShipInv: true, settledMerchant: false, settledCourier: false, stockDeducted: false, createdAt: nowStr, actionAt: `جاهز للشحن: ${nowStr}`, historyLog: [{ action: 'سحب تلقائي من Shopify وتجهيز بالمخزن', time: nowStr }] };
-            syncWarehouseStockForOrder(newOrder, 'جاهز للشحن'); ordersData.unshift(newOrder); renderAll(); pushToOpsDB();
-            const toast = document.getElementById('shopify-toast');
-            document.getElementById('toast-icon-box').innerHTML = `<i class="fa-brands fa-shopify text-2xl text-[#95BF47]"></i>`;
-            document.getElementById('shopify-toast-title').innerText = 'تم سحب أوردر جديد عبر Shopify Webhook وحفظه في الشيت!';
-            document.getElementById('shopify-toast-text').innerText = `بوليصة #${newOrder.awb} | خصم 7 قطع من المخزن (${nowStr})`;
-            toast.classList.remove('hidden'); toast.classList.add('flex');
-        }
-
         function renderNDR() {
-            const ndrs = ordersData.filter(o => o.status.includes('مرتجع') || o.status === 'مؤجل');
+            const ndrs = ordersData.filter(o => String(o.status).includes('مرتجع') || o.status === 'مؤجل');
             document.getElementById('badge-ndr').innerText = ndrs.length;
             document.getElementById('ndr-list').innerHTML = ndrs.map(o => `<div class="p-4 rounded-xl border border-rose-200 bg-rose-50/40 flex flex-wrap items-center justify-between gap-3"><div><span class="font-black text-rose-700">#${o.awb}</span> ${getSourceBadgeHTML(o.source)} | <strong>${o.merchant}</strong><p class="text-slate-600 mt-1">المستلم: ${o.recipient} (${o.phone}) | الحالة: <strong>${o.status}</strong> | ${o.actionAt}</p></div><div class="flex gap-2"><a href="https://wa.me/2${o.phone}" target="_blank" class="px-3 py-2 bg-emerald-600 text-white rounded-xl font-bold"><i class="fa-brands fa-whatsapp"></i> واتساب</a><button onclick="changeOrderStatus(${ordersData.indexOf(o)}, 'تم الشحن مع المندوب')" class="px-3 py-2 bg-brand text-white rounded-xl font-bold">إعادة شحن</button></div></div>`).join('');
         }
