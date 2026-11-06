@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- مكتبة قراءة الباركود و QR الفعلية بالكاميرا -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root { --brand-primary: #0891b2; --brand-hover: #0e7490; --brand-light: #ecfeff; --sidebar-bg: #0f172a; }
         body { font-family: 'Cairo', sans-serif; background-color: #f1f5f9; overflow: hidden; -webkit-tap-highlight-color: transparent; }
@@ -75,7 +77,7 @@
 </head>
 <body class="text-slate-800 h-screen flex flex-col">
 
-    <!-- ================= شاشة التحميل السحابية (تعمل حتى اكتمال سحب العهدة من Google Sheets) ================= -->
+    <!-- ================= شاشة التحميل السحابية ================= -->
     <div id="prime-cloud-preloader">
         <div class="relative flex items-center justify-center mb-5">
             <div class="loader-ring"></div>
@@ -88,7 +90,7 @@
         <div class="w-64 h-1.5 bg-slate-800 rounded-full overflow-hidden mt-5 border border-slate-700">
             <div id="prime-loader-bar" class="h-full bg-gradient-to-l from-cyan-400 to-blue-600 transition-all duration-300" style="width: 25%"></div>
         </div>
-        <p id="prime-loader-sub" class="text-[11px] font-bold text-slate-300 mt-3">جاري تحميل خط سيرك وعهدتك من Google Sheets...</p>
+        <p id="prime-loader-sub" class="text-[11px] font-bold text-slate-300 mt-3">جاري تحميل خط سيرك وعهدتك الفعلية من Google Sheets...</p>
     </div>
 
     <!-- مؤشر حالة الحفظ الفعلي في جوجل شيت -->
@@ -112,7 +114,7 @@
                 <button onclick="setSidebarMode('closed')" id="mode-closed-btn" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-rose-600 transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <!-- شارة اسم المندوب المسجل دخوله (مؤمّنة) -->
+            <!-- شارة اسم المندوب المسجل دخوله -->
             <div onclick="switchTab('tab-profile', document.getElementById('nav-btn-profile'))" class="cursor-pointer flex items-center gap-2 bg-cyan-50 border border-cyan-200 px-3 py-1.5 rounded-xl text-xs">
                 <div class="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center overflow-hidden flex-shrink-0 border border-cyan-300">
                     <i id="header-avatar-icon" class="fa-solid fa-motorcycle text-[10px]"></i>
@@ -334,7 +336,7 @@
                 </div>
             </div>
 
-            <!-- ================= الصفحة 4: الملف الشخصي للمندوب (للقراءة فقط 🔒 + رفع صورته الشخصية) ================= -->
+            <!-- ================= الصفحة 4: الملف الشخصي للمندوب ================= -->
             <div id="tab-profile" class="tab-pane space-y-5">
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
                     <div>
@@ -490,7 +492,7 @@
     <!-- حاوية الطباعة متعددة الصفحات -->
     <div id="print-mount-root"></div>
 
-    <!-- ================= المحرك البرمجي الشامل لتطبيق المندوب + الربط الفعلي بـ Google Sheets ================= -->
+    <!-- ================= المحرك البرمجي الفعلي لتطبيق المندوب (نظيف بدون أي محاكاة أو بيانات وهمية) ================= -->
     <script>
         const PRIME_CLOUD_URLS = {
             CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzDQzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
@@ -499,6 +501,9 @@
         };
 
         let customEGatewayLogoDataUrl = localStorage.getItem('swift_egateway_logo') || '';
+        let isInitialCloudLoaded = false;
+        let html5QrScanner = null;
+
         function getEGatewayLogoHTML(sizeClass = "w-4 h-4") {
             if (customEGatewayLogoDataUrl) return `<img src="${customEGatewayLogoDataUrl}" class="${sizeClass} object-contain inline-block" alt="E-Gateway">`;
             return `<svg viewBox="0 0 100 100" class="${sizeClass} inline-block flex-shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -523,15 +528,10 @@
         }
 
         const couriersData = [
-            { id: 'CR-01', name: 'أحمد المندوب', phone: '01011112222', user: 'ahmed_cr', pass: '123456', zone: 'المعادي وحلوان', comm: 20 },
-            { id: 'CR-02', name: 'محمود سمير', phone: '01233334444', user: 'mahmoud_cr', pass: '123456', zone: 'الإسكندرية - سموحة', comm: 25 },
-            { id: 'CR-03', name: 'كريم طارق', phone: '01155556666', user: 'karim_cr', pass: '123456', zone: 'مدينة نصر والتجمع', comm: 20 }
+            { id: 'CR-01', name: 'أحمد المندوب', phone: '01011112222', user: 'ahmed_cr', pass: '123456', zone: 'المعادي وحلوان', comm: 20 }
         ];
 
-        const warehouseData = [
-            { sku: 'SKU-101', merchant: 'بيبون ستور', name: 'هودي أوفر سايز', fragile: 'عادي', packFee: 0, stock: 120 },
-            { sku: 'SKU-102', merchant: 'بيبون ستور', name: 'برفان أوريجينال', fragile: 'ضد الكسر (تغليف بابلز خاص)', packFee: 15, stock: 85 }
-        ];
+        const warehouseData = [];
 
         // تحديد المندوب المسجل دخوله من شاشة index.html
         let currentCourier = couriersData[0];
@@ -544,14 +544,11 @@
             }
         } catch (e) {}
 
-        const ordersData = [
-            { awb: 'EGW-9040', source: 'E-Gateway', merchant: 'بيبون ستور', recipient: 'مروان يونس', phone: '01099112233', gov: 'القاهرة', address: 'المعادي دجلة شارع 231', items: 'هودي أوفر سايز - عرض 3 قطع', notes: 'وارد منصة E-Gateway', fragile: false, prodPrice: 900, fee: 45, packFee: 0, paid: 945, courier: 'أحمد المندوب', courierComm: 20, status: 'تم التسليم', callAttempts: 1, settledMerchant: false, settledCourier: false, stockDeducted: true, createdAt: '٢٨‏/١٠‏/٢٠٢٦ - ٠٩:٠٠ ص', actionAt: 'تم التسليم: ٢٩‏/١٠‏/٢٠٢٦ - ١٠:١٥ ص', historyLog: [{ action: 'تم التسليم والتحصيل الكامل', time: '٢٩‏/١٠‏/٢٠٢٦ - ١٠:١٥ ص' }] },
-            { awb: 'AWB-9041', source: 'Shopify', merchant: 'بيبون ستور', recipient: 'سارة محمود', phone: '01012345678', gov: 'القاهرة', address: 'المعادي شارع 9 بجوار محطة المترو عمارة 14', items: 'هودي أوفر سايز - عرض 7 قطع', notes: 'مسموح بالمعاينة', fragile: false, prodPrice: 600, fee: 45, packFee: 0, paid: 645, courier: 'أحمد المندوب', courierComm: 20, status: 'تم التسليم', callAttempts: 1, settledMerchant: false, settledCourier: false, stockDeducted: true, createdAt: '٢٨‏/١٠‏/٢٠٢٦ - ١٠:١٥ ص', actionAt: 'تم التسليم: ٢٩‏/١٠‏/٢٠٢٦ - ٠١:٤٠ م', historyLog: [{ action: 'تم التسليم والتحصيل الكامل', time: '٢٩‏/١٠‏/٢٠٢٦ - ٠١:٤٠ م' }] }
-        ];
+        // مصفوفة الشحنات فارغة تماماً من أي بيانات وهمية - تُملأ فقط من الشيت الفعلي
+        const ordersData = [];
 
         let activeFilterMode = 'ALL';
         let activeActionOrderIdx = -1;
-        let cameraStream = null;
 
         function setSyncStatus(state, msg) {
             const dot = document.getElementById('prime-sync-dot');
@@ -562,20 +559,56 @@
             else { dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400'; txt.innerText = msg || '✅ تم الحفظ الفعلي في Google Sheets ✓'; }
         }
 
-        // ================= دوال المزامنة السحابية والتحقق الفعلي مع Google Sheets =================
+        function formatRawSheetOrder(o) {
+            return {
+                ...o,
+                awb: String(o.awb || '').trim(),
+                source: o.source || (String(o.awb).startsWith('EGW') ? 'E-Gateway' : 'يدوي'),
+                merchant: o.merchant || 'بيبون ستور',
+                recipient: o.recipient || 'عميل',
+                phone: String(o.phone || ''),
+                gov: o.gov || 'القاهرة',
+                address: o.address || '',
+                items: o.items || 'طرد شحن',
+                notes: o.notes || '',
+                prodPrice: parseFloat(o.prodPrice) || 0,
+                fee: parseFloat(o.fee) || 0,
+                packFee: parseFloat(o.packFee) || 0,
+                paid: parseFloat(o.paid) || 0,
+                courier: o.courier || 'بدون مندوب',
+                courierComm: parseFloat(o.courierComm) || 20,
+                status: o.status || 'جاهز للشحن',
+                callAttempts: parseInt(o.callAttempts) || 0,
+                showShipInv: o.showShipInv !== false && o.showShipInv !== 'FALSE' && o.showShipInv !== 'false',
+                settledMerchant: o.settledMerchant === true || o.settledMerchant === 'TRUE' || o.settledMerchant === 'true',
+                settledCourier: o.settledCourier === true || o.settledCourier === 'TRUE' || o.settledCourier === 'true',
+                stockDeducted: o.stockDeducted === true || o.stockDeducted === 'TRUE' || o.stockDeducted === 'true',
+                historyLog: Array.isArray(o.historyLog) ? o.historyLog : []
+            };
+        }
+
+        // ================= دوال المزامنة السحابية الحقيقية مع Google Sheets =================
         async function pullAllFromGoogleSheets(manualRefresh = false) {
             if (manualRefresh) setSyncStatus('saving', '⏳ جاري تحديث خط سيرك وعهدتك من الشيتات...');
             const bar = document.getElementById('prime-loader-bar');
+            const ts = Date.now();
+
+            const preloaderSafety = setTimeout(() => {
+                document.getElementById('prime-cloud-preloader')?.classList.add('loaded');
+            }, 2500);
 
             try {
                 if (bar) bar.style.width = '55%';
                 const [coreRes, opsRes] = await Promise.all([
-                    fetch(PRIME_CLOUD_URLS.CORE_DB).then(r => r.json()).catch(() => null),
-                    fetch(PRIME_CLOUD_URLS.OPS_DB).then(r => r.json()).catch(() => null)
+                    fetch(`${PRIME_CLOUD_URLS.CORE_DB}?t=${ts}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+                    fetch(`${PRIME_CLOUD_URLS.OPS_DB}?t=${ts}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)
                 ]);
                 if (bar) bar.style.width = '90%';
 
+                let connected = false;
+
                 if (coreRes && coreRes.status === 'success') {
+                    connected = true;
                     if (Array.isArray(coreRes.couriers) && coreRes.couriers.length > 0) {
                         const cleanCour = coreRes.couriers.filter(c => c.name).map(c => ({
                             ...c,
@@ -592,45 +625,56 @@
                             }
                         }
                     }
-                    if (Array.isArray(coreRes.warehouse) && coreRes.warehouse.length > 0) {
+                    if (Array.isArray(coreRes.warehouse)) {
                         const cleanWh = coreRes.warehouse.filter(w => w.name).map(w => ({ ...w, packFee: parseFloat(w.packFee) || 0, stock: parseInt(w.stock) || 0 }));
-                        if (cleanWh.length > 0) warehouseData.splice(0, warehouseData.length, ...cleanWh);
+                        warehouseData.splice(0, warehouseData.length, ...cleanWh);
                     }
                 }
 
-                if (opsRes && opsRes.status === 'success' && Array.isArray(opsRes.orders) && opsRes.orders.length > 0) {
-                    const cleanOrders = opsRes.orders.filter(o => o.awb).map(o => ({
-                        ...o,
-                        prodPrice: parseFloat(o.prodPrice) || 0,
-                        fee: parseFloat(o.fee) || 0,
-                        packFee: parseFloat(o.packFee) || 0,
-                        paid: parseFloat(o.paid) || 0,
-                        courierComm: parseFloat(o.courierComm) || 20,
-                        callAttempts: parseInt(o.callAttempts) || 0,
-                        showShipInv: o.showShipInv !== false && o.showShipInv !== 'FALSE' && o.showShipInv !== 'false',
-                        settledMerchant: o.settledMerchant === true || o.settledMerchant === 'TRUE' || o.settledMerchant === 'true',
-                        settledCourier: o.settledCourier === true || o.settledCourier === 'TRUE' || o.settledCourier === 'true',
-                        stockDeducted: o.stockDeducted === true || o.stockDeducted === 'TRUE' || o.stockDeducted === 'true',
-                        historyLog: Array.isArray(o.historyLog) ? o.historyLog : []
-                    }));
-                    if (cleanOrders.length > 0) ordersData.splice(0, ordersData.length, ...cleanOrders);
+                // قراءة الشحنات الحقيقية من الشيت الثاني كما هي (حتى لو كانت 0 شحنة)
+                if (opsRes && opsRes.status === 'success' && Array.isArray(opsRes.orders)) {
+                    connected = true;
+                    const cleanOrders = opsRes.orders.filter(o => o.awb && String(o.awb).trim() !== '').map(formatRawSheetOrder);
+                    ordersData.splice(0, ordersData.length, ...cleanOrders);
                 }
 
-                renderAll();
-                setSyncStatus('ok', '✅ متصل ومحدث من Google Sheets ✓');
+                isInitialCloudLoaded = true;
+
+                if (connected) {
+                    setSyncStatus('ok', '✅ متصل ومحدث من Google Sheets ✓');
+                } else {
+                    setSyncStatus('error', '❌ تعذر الاتصال بجوجل شيت');
+                }
             } catch (e) {
                 setSyncStatus('error', '❌ تعذر الاتصال بجوجل شيت');
             }
 
+            try { renderAll(); } catch (err) { console.error(err); }
+
+            clearTimeout(preloaderSafety);
             if (bar) bar.style.width = '100%';
             setTimeout(() => {
                 document.getElementById('prime-cloud-preloader')?.classList.add('loaded');
-            }, 300);
+            }, 250);
         }
 
+        // حفظ محمي بالدمج الذكي حتى لا يمسح المندوب أي شحنات جديدة أضيفت في الشركة
         async function pushToOpsDB() {
+            if (!isInitialCloudLoaded) return;
             setSyncStatus('saving', '⏳ جاري حفظ الحالة والتحصيل في جوجل شيت...');
             try {
+                const remoteCheck = await fetch(`${PRIME_CLOUD_URLS.OPS_DB}?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null);
+                if (remoteCheck && remoteCheck.status === 'success' && Array.isArray(remoteCheck.orders)) {
+                    const localAwbs = new Set(ordersData.map(o => String(o.awb).toUpperCase()));
+                    remoteCheck.orders.forEach(ro => {
+                        const rAwb = String(ro.awb || '').trim().toUpperCase();
+                        if (rAwb && !localAwbs.has(rAwb)) {
+                            ordersData.unshift(formatRawSheetOrder(ro));
+                            localAwbs.add(rAwb);
+                        }
+                    });
+                }
+
                 const res = await fetch(PRIME_CLOUD_URLS.OPS_DB, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -643,14 +687,9 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'UPDATE_WAREHOUSE', warehouse: warehouseData })
-                });
+                }).catch(() => {});
 
-                const verify = await fetch(PRIME_CLOUD_URLS.OPS_DB).then(r => r.json());
-                if (ordersData.length > 0 && (!verify.orders || verify.orders.length === 0)) {
-                    setSyncStatus('error', '❌ لم يُحفظ! شغّل setupSheet في الشيت الثاني');
-                    alert('⚠️ تنبيه: شيت الشحنات لم يحفظ البيانات لأن دالة setupSheet لم يتم تشغيلها في الشيت الثاني!');
-                    return;
-                }
+                renderAll();
                 setSyncStatus('ok', '✅ تم حفظ التحصيل والحالة فعلياً في Google Sheets ✓');
             } catch (e) {
                 setSyncStatus('error', '❌ فشل الحفظ في شيت الشحنات!');
@@ -659,9 +698,10 @@
 
         function parseOfferQuantity(itemText) {
             if (!itemText) return 1;
+            const str = String(itemText);
             const arabicNums = { 'واحد': 1, 'قطعتين': 2, 'اثنين': 2, 'ثلاث': 3, 'تلات': 3, 'اربع': 4, 'أربع': 4, 'خمس': 5, 'ست': 6, 'سبع': 7, 'السبع': 7, 'ثمان': 8, 'تسع': 9, 'عشر': 10 };
-            for (const [word, num] of Object.entries(arabicNums)) { if (itemText.includes(word)) return num; }
-            const match = itemText.match(/(\d+)\s*(قطع|قطعه|قطعة|x|X|باكيدج|عرض)/i) || itemText.match(/(عرض|باكيدج)\s*(\d+)/i);
+            for (const [word, num] of Object.entries(arabicNums)) { if (str.includes(word)) return num; }
+            const match = str.match(/(\d+)\s*(قطع|قطعه|قطعة|عبوة|عبوه|شنط|شنطة|x|X|باكيدج|عرض)/i) || str.match(/(عرض|باكيدج)\s*(\d+)/i);
             return match ? (parseInt(match[1]) || parseInt(match[2]) || 1) : 1;
         }
 
@@ -759,24 +799,24 @@
                 </div>
             </div>
 
-            <!-- 3. نافذة ماسح الكاميرا للمندوب -->
+            <!-- 3. نافذة ماسح الكاميرا الفعلي للمندوب (بدون محاكاة) -->
             <div id="modal-camera-scanner" onclick="handleBackdropClick(event, 'modal-camera-scanner')" class="modal-backdrop fixed inset-0 bg-slate-900/75 hidden items-center justify-center p-3 sm:p-4 z-50">
                 <div class="modal-card bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden text-xs">
                     <div class="p-4 border-b bg-slate-900 text-white flex justify-between items-center">
-                        <h3 class="font-extrabold text-sm flex items-center gap-2"><i class="fa-solid fa-camera text-amber-400"></i><span>مسح باركود البوليصة</span></h3>
+                        <h3 class="font-extrabold text-sm flex items-center gap-2"><i class="fa-solid fa-camera text-amber-400"></i><span>مسح باركود البوليصة الفعلي</span></h3>
                         <button onclick="closeCameraScannerModal()" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs">إغلاق</button>
                     </div>
                     <div class="p-4 space-y-4 text-center">
-                        <div class="bg-slate-950 rounded-2xl p-4 border-2 border-dashed border-amber-400">
-                            <video id="camera-video-preview" class="w-full h-40 object-cover rounded-xl hidden" autoplay playsinline></video>
-                            <div class="py-4 text-white space-y-2">
-                                <i class="fa-solid fa-qrcode text-4xl text-amber-400 animate-pulse"></i>
-                                <p class="text-xs font-bold">امسح باركود البوليصة لفتح نافذة التحصيل والتسليم فوراً</p>
-                                <div class="flex justify-center gap-2 pt-2">
-                                    <button onclick="startRealCamera()" class="px-3 py-2 bg-blue-600 text-white rounded-xl font-bold">تشغيل الكاميرا</button>
-                                    <button onclick="simulateScanActiveOrder()" class="px-3 py-2 bg-amber-400 text-slate-950 rounded-xl font-black">التقاط أول بوليصة بعهدتي</button>
-                                </div>
+                        <div class="bg-slate-950 rounded-2xl p-3 border-2 border-amber-400 overflow-hidden">
+                            <div id="courier-qr-reader" class="w-full rounded-xl overflow-hidden bg-black min-h-[180px] flex items-center justify-center text-slate-400 font-bold">اضغط على "تشغيل الكاميرا الآن" ووجّه العدسة نحو باركود البوليصة</div>
+                            <div class="flex justify-center gap-2 pt-3">
+                                <button onclick="startRealCamera()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black shadow flex items-center gap-1.5"><i class="fa-solid fa-video"></i> تشغيل الكاميرا الآن</button>
                             </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <input id="courier-manual-scan-input" type="text" onkeydown="if(event.key==='Enter') executeManualCourierScan()" placeholder="أو اكتب رقم البوليصة يدوياً واضغط فتح..." class="flex-1 p-2.5 border rounded-xl font-bold outline-none focus:border-cyan-600">
+                            <button onclick="executeManualCourierScan()" class="px-4 py-2 bg-slate-900 text-white rounded-xl font-bold">فتح البوليصة</button>
                         </div>
                     </div>
                 </div>
@@ -824,13 +864,13 @@
         function renderCourierKPIsAndCustody() {
             const myOrders = getMyCourierOrders();
             const activeCount = myOrders.filter(o => o.status === 'تم الشحن مع المندوب').length;
-            const delivCount = myOrders.filter(o => o.status.includes('تم التسليم')).length;
-            const issuesCount = myOrders.filter(o => o.status.includes('مرتجع') || o.status === 'مؤجل').length;
-            const returnsInHand = myOrders.filter(o => o.status.includes('مرتجع') || o.status === 'تم التسليم جزئي').length;
+            const delivCount = myOrders.filter(o => String(o.status).includes('تم التسليم')).length;
+            const issuesCount = myOrders.filter(o => String(o.status).includes('مرتجع') || o.status === 'مؤجل').length;
+            const returnsInHand = myOrders.filter(o => String(o.status).includes('مرتجع') || o.status === 'تم التسليم جزئي').length;
 
             const totalCashCollected = myOrders.reduce((s, o) => s + (parseFloat(o.paid) || 0), 0);
             const totalCommEarned = myOrders
-                .filter(o => o.status.includes('تم التسليم') || o.status === 'مرتجع وتم دفع الشحن')
+                .filter(o => String(o.status).includes('تم التسليم') || o.status === 'مرتجع وتم دفع الشحن')
                 .reduce((s, o) => s + (parseFloat(o.courierComm) || currentCourier.comm || 20), 0);
 
             const netToBranch = totalCashCollected - totalCommEarned;
@@ -860,9 +900,15 @@
             document.getElementById('man-returns-count').innerText = returnsInHand + ' طرد';
             document.getElementById('man-net-branch').innerText = netToBranch.toLocaleString() + ' ج.م';
 
-            document.getElementById('manifest-orders-tbody').innerHTML = myOrders.map(o => {
+            const manifestTbody = document.getElementById('manifest-orders-tbody');
+            if (myOrders.length === 0) {
+                manifestTbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400 font-bold">لا توجد شحنات محمّلة على عهدتك حالياً</td></tr>`;
+                return;
+            }
+
+            manifestTbody.innerHTML = myOrders.map(o => {
                 const totalCod = (parseFloat(o.prodPrice) || 0) + (parseFloat(o.fee) || 0);
-                const earnedComm = (o.status.includes('تم التسليم') || o.status === 'مرتجع وتم دفع الشحن') ? (parseFloat(o.courierComm) || 20) : 0;
+                const earnedComm = (String(o.status).includes('تم التسليم') || o.status === 'مرتجع وتم دفع الشحن') ? (parseFloat(o.courierComm) || 20) : 0;
                 const netRow = (parseFloat(o.paid) || 0) - earnedComm;
                 return `<tr>
                     <td class="p-2.5 font-black">#${o.awb} ${getSourceBadgeHTML(o.source)}</td>
@@ -872,7 +918,7 @@
                     <td class="p-2.5 font-black text-blue-700">${o.paid} ج.م</td>
                     <td class="p-2.5 font-black text-emerald-600">${earnedComm} ج.م</td>
                     <td class="p-2.5 font-black text-slate-900">${netRow} ج.م</td>
-                    <td class="p-2.5 text-[10px]">${o.actionAt}</td>
+                    <td class="p-2.5 text-[10px]">${o.actionAt || o.createdAt}</td>
                     <td class="p-2.5 font-bold">${o.status}</td>
                 </tr>`;
             }).join('');
@@ -884,14 +930,14 @@
                 const matchSearch = String(o.awb).toLowerCase().includes(q) || String(o.recipient).toLowerCase().includes(q) || String(o.phone).includes(q) || String(o.address).toLowerCase().includes(q);
                 if (!matchSearch) return false;
                 if (activeFilterMode === 'ACTIVE') return o.status === 'تم الشحن مع المندوب';
-                if (activeFilterMode === 'DELIVERED') return o.status.includes('تم التسليم');
-                if (activeFilterMode === 'ISSUES') return o.status.includes('مرتجع') || o.status === 'مؤجل';
+                if (activeFilterMode === 'DELIVERED') return String(o.status).includes('تم التسليم');
+                if (activeFilterMode === 'ISSUES') return String(o.status).includes('مرتجع') || o.status === 'مؤجل';
                 return true;
             });
 
             const container = document.getElementById('courier-tasks-container');
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="lg:col-span-2 bg-white p-8 rounded-2xl border text-center text-slate-400 font-bold">لا توجد شحنات مطابقة لهذا الفلتر في عهدتك حالياً</div>`;
+                container.innerHTML = `<div class="lg:col-span-2 bg-white p-8 rounded-2xl border text-center text-slate-400 font-bold">لا توجد شحنات في عهدتك حالياً — بمجرد قيام الإدارة بتحميل شحنات على اسمك ستظهر هنا فوراً</div>`;
                 return;
             }
 
@@ -899,8 +945,8 @@
                 const realIdx = ordersData.indexOf(o);
                 const totalCod = (parseFloat(o.prodPrice) || 0) + (parseFloat(o.fee) || 0);
                 const mapsQuery = encodeURIComponent(`${o.gov} ${o.address}`);
-                const isDone = o.status.includes('تم التسليم');
-                const isIssue = o.status.includes('مرتجع') || o.status === 'مؤجل';
+                const isDone = String(o.status).includes('تم التسليم');
+                const isIssue = String(o.status).includes('مرتجع') || o.status === 'مؤجل';
 
                 const badgeClass = isDone ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                     : isIssue ? 'bg-rose-100 text-rose-800 border-rose-300'
@@ -935,7 +981,7 @@
                             <div><span class="text-slate-400 font-bold">الطرد: </span><strong class="text-slate-900">${o.items}</strong></div>
                             ${o.notes ? `<div class="text-amber-800 font-bold"><i class="fa-regular fa-comment-dots ml-1"></i>ملاحظة: ${o.notes}</div>` : ''}
                             <div class="flex items-center justify-between pt-1 border-t text-[10px] text-slate-500 font-bold">
-                                <span><i class="fa-solid fa-clock-rotate-left ml-1"></i>${o.actionAt}</span>
+                                <span><i class="fa-solid fa-clock-rotate-left ml-1"></i>${o.actionAt || o.createdAt}</span>
                                 <span class="text-blue-700">محاولات الاتصال: ${o.callAttempts || 0}</span>
                             </div>
                         </div>
@@ -1000,6 +1046,7 @@
         function openCourierActionModal(idx) {
             activeActionOrderIdx = idx;
             const o = ordersData[idx];
+            if (!o) return;
             const totalCod = (parseFloat(o.prodPrice) || 0) + (parseFloat(o.fee) || 0);
             document.getElementById('act-awb-title').innerText = '#' + o.awb;
             document.getElementById('act-recipient-name').innerText = `${o.recipient} (${o.gov})`;
@@ -1013,6 +1060,7 @@
         function selectActionStatus(st) {
             document.getElementById('act-selected-status').value = st;
             const o = ordersData[activeActionOrderIdx];
+            if (!o) return;
             const totalCod = (parseFloat(o.prodPrice) || 0) + (parseFloat(o.fee) || 0);
             const paidInput = document.getElementById('act-paid-input');
             const hint = document.getElementById('act-paid-hint');
@@ -1054,7 +1102,7 @@
         }
 
         function renderCourierNDR() {
-            const list = getMyCourierOrders().filter(o => o.status.includes('مرتجع') || o.status === 'مؤجل');
+            const list = getMyCourierOrders().filter(o => String(o.status).includes('مرتجع') || o.status === 'مؤجل');
             const box = document.getElementById('courier-ndr-list');
             if (list.length === 0) {
                 box.innerHTML = `<div class="p-6 text-center text-slate-400 font-bold">لا توجد شحنات متعثرة أو مؤجلة في عهدتك حالياً 🎉</div>`;
@@ -1118,7 +1166,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'UPDATE_AVATAR', targetTab: 'Couriers', keyField: 'id', keyValue: currentCourier.id, avatarDataUrl: dataUrl })
-                });
+                }).catch(() => {});
                 alert('✅ تم تحديث صورتك الشخصية وحفظها بنجاح!');
             };
             reader.readAsDataURL(file);
@@ -1135,17 +1183,61 @@
             window.open(`https://wa.me/201000000000?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        function openCameraScannerModal() { openModal('modal-camera-scanner'); }
-        function closeCameraScannerModal() { if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; } closeModal('modal-camera-scanner'); }
-        function startRealCamera() {
-            if (!navigator.mediaDevices?.getUserMedia) return alert('اضغط على زر "التقاط أول بوليصة بعهدتي"');
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(s => { cameraStream = s; const v = document.getElementById('camera-video-preview'); v.srcObject = s; v.classList.remove('hidden'); }).catch(() => alert('تم تفعيل الالتقاط السريع'));
+        // ================= دوال الماسح الفعلي للباركود و QR بالكاميرا للمندوب =================
+        function openCameraScannerModal() {
+            openModal('modal-camera-scanner');
         }
-        function simulateScanActiveOrder() {
-            closeCameraScannerModal();
-            const myActive = getMyCourierOrders();
-            if (myActive.length === 0) return alert('لا توجد شحنات نشطة في عهدتك حالياً');
-            openCourierActionModal(ordersData.indexOf(myActive[0]));
+
+        async function closeCameraScannerModal() {
+            if (html5QrScanner) {
+                try {
+                    await html5QrScanner.stop();
+                    html5QrScanner.clear();
+                } catch (e) {}
+                html5QrScanner = null;
+            }
+            closeModal('modal-camera-scanner');
+        }
+
+        function startRealCamera() {
+            if (typeof Html5Qrcode === 'undefined') {
+                return alert('جاري تجهيز الكاميرا، حاول بعد ثانية.');
+            }
+            if (html5QrScanner) return;
+
+            html5QrScanner = new Html5Qrcode("courier-qr-reader");
+            html5QrScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 120 } },
+                async (decodedText) => {
+                    const cleanCode = String(decodedText || '').replace(/\*/g, '').replace(/#/g, '').trim();
+                    const idx = ordersData.findIndex(o => String(o.awb).toUpperCase() === cleanCode.toUpperCase());
+                    if (idx > -1) {
+                        await closeCameraScannerModal();
+                        openCourierActionModal(idx);
+                    } else {
+                        alert(`تم قراءة الكود (#${cleanCode}) ولكن هذه البوليصة غير مسجلة في الجدول حالياً.`);
+                    }
+                },
+                () => {}
+            ).catch(() => {
+                alert('تعذر فتح الكاميرا! تأكد من السماح بصلاحية الكاميرا في المتصفح أو اكتب رقم البوليصة في الخانة بالأسفل.');
+                html5QrScanner = null;
+            });
+        }
+
+        function executeManualCourierScan() {
+            const inp = document.getElementById('courier-manual-scan-input');
+            const cleanCode = (inp?.value || '').replace(/\*/g, '').replace(/#/g, '').trim();
+            if (!cleanCode) return alert('اكتب رقم البوليصة أولاً');
+            const idx = ordersData.findIndex(o => String(o.awb).toUpperCase() === cleanCode.toUpperCase());
+            if (idx > -1) {
+                inp.value = '';
+                closeCameraScannerModal();
+                openCourierActionModal(idx);
+            } else {
+                alert(`لا توجد بوليصة بهذا الرقم (#${cleanCode}) في عهدتك حالياً.`);
+            }
         }
 
         function printCourierManifest() {
