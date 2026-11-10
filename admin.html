@@ -555,8 +555,9 @@
     <div id="print-mount-root"></div>
 
     <script>
+        // الروابط السحابية الصحيحة والكاملة للشيتات الثلاثة
         const PRIME_CLOUD_URLS = {
-            CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
+            CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzDQzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
             OPS_DB:  "https://script.google.com/macros/s/AKfycbxsbu4BzuCSZ1EYyB54V9qx5g0VQojS6_cyeW-4gnldVEbKQdAXIsKSWK33hQqfEfyN/exec",
             FIN_DB:  "https://script.google.com/macros/s/AKfycbwIakNG3LFoVSusSqBkmwW5bJEQBqp6j4mbYyZn5dwh1qXTVUplYLa5uje5kHhTaopq/exec",
             PIU_STORE_DB: "https://script.google.com/macros/s/AKfycby8l9JscC-mTuifFBfkRpyXVCfqEMUu2pWIu67IXhEFB80fHslB3gdBpejE4RFIhD2d/exec"
@@ -618,8 +619,9 @@
             { code: 'ZN-06', name: 'محافظات الصعيد', sector: 'شمال ووسط الصعيد', fee: 85, comm: 30, remoteFee: 25, extraKg: 15, sla: '48 إلى 72 ساعة' }
         ];
 
+        // مطابقة للبيانات الفعلية المسجلة في شيت Core_DB_1
         const merchantsData = [
-            { code: 'MER-101', store: 'بيبون ستور', owner: 'بدر رفعت', phone: '01100000000', user: 'pepon', pass: '123456', discount: 5, shopify: true, egateway: true }
+            { code: 'MER-101', store: 'Piu Poin', owner: 'احمد ناصر', phone: '201126389850', user: 'piupoin', pass: '444888', discount: 0, shopify: true, egateway: true }
         ];
 
         const couriersData = [
@@ -639,11 +641,9 @@
         // =========================================================================
         function extractBaseProductName(offerTitle) {
             let s = String(offerTitle || '').trim();
-            // إزالة بادئات العروض مثل (عرض ال15، عرض الـ 3، باكيدج 5، عرض قطعتين...)
             s = s.replace(/^(عرض|باكيدج|مجموعة|بكج)\s*(الـ?|ال)?\s*\d*\s*/i, '');
             s = s.replace(/^(قطعتين|ثلاث|تلات|اربع|أربع|خمس|ست|سبع|ثمان|تسع|عشر)\s*(قطع|قطعه|قطعة)?\s*(من)?\s*/i, '');
             s = s.replace(/^\d+\s*(قطع|قطعه|قطعة|عبوة|عبوه)?\s*(من)?\s*/i, '');
-            // توحيد كلمة (شنطه / شنطة) إلى (شنط) ليتعرف عليها المخزن كصنف واحد (مثلاً: شنط تخزين)
             s = s.replace(/^(شنطة|شنطه)\b/i, 'شنط');
             s = s.replace(/\s+/g, ' ').trim();
             return s || String(offerTitle || '').trim();
@@ -651,7 +651,7 @@
 
         function analyzeOrderItemsSmart(rawText) {
             if (!rawText) {
-                return { cleanDisplay: 'طرد شحن', totalPieces: 1, baseSummaryText: 'طرد شحن (1 قطعة)', baseGroups: {},offerLines: ['طرد شحن'] };
+                return { cleanDisplay: 'طرد شحن', totalPieces: 1, baseSummaryText: 'طرد شحن (1 قطعة)', baseGroups: {}, offerLines: ['طرد شحن'] };
             }
 
             const segments = String(rawText).split('+').map(s => s.trim()).filter(Boolean);
@@ -666,14 +666,12 @@
                 let cartMult = 1;
                 let coreName = seg;
 
-                // فحص ما إذا كان السلة أضافت في آخر النص (- عرض 1 قطع) أو (- عرض X قطع)
                 const suffixMatch = seg.match(/\s*-\s*عرض\s*(\d+)\s*(قطع|قطعه|قطعة|عبوة|عبوه)?\s*$/i);
                 if (suffixMatch) {
                     cartMult = parseInt(suffixMatch[1]) || 1;
                     coreName = seg.slice(0, suffixMatch.index).trim();
                 }
 
-                // البحث عن عدد القطع الحقيقي داخل اسم العرض نفسه (مثل: عرض ال15 شنطه تخزين -> 15)
                 let bundleQty = 0;
                 const numMatch = coreName.match(/(\d+)/);
                 if (numMatch) {
@@ -684,7 +682,6 @@
                     }
                 }
 
-                // إذا كان اسم العرض يحتوي على عدد (مثل 15 شنطة)، نضربه في عدد المرات (15 × 1 = 15 قطعة فقط دون جمع الـ 1 الوهمي!)
                 let segPieces = 1;
                 let cleanSegText = coreName;
 
@@ -692,7 +689,6 @@
                     segPieces = bundleQty * cartMult;
                     cleanSegText = cartMult > 1 ? `${coreName} (×${cartMult})` : coreName;
                 } else {
-                    // إذا كان المنتج اسمه بدون رقم (مثل: هودي أوفر سايز) وكان الملحق (- عرض 3 قطع)، فالعدد هو 3
                     segPieces = cartMult;
                     cleanSegText = cartMult > 1 ? `${coreName} (${cartMult} قطع)` : coreName;
                 }
@@ -724,7 +720,6 @@
             return analyzeOrderItemsSmart(itemText).totalPieces;
         }
 
-        // مطابقة مرنة بين الصنف المستخرج والمخزن الذكي (تتجاهل التاء المربوطة والهاء والهمزات)
         function normalizeArabicForMatch(str) {
             return String(str || '')
                 .replace(/[أإآ]/g, 'ا')
@@ -744,7 +739,6 @@
             let totalPackFee = 0;
             let matchedAny = false;
 
-            // فحص كل صنف أساسي مستخرج من الأوردر ومطابقته مع مخزن التاجر
             for (const [baseProd, qty] of Object.entries(analysis.baseGroups)) {
                 const normBase = normalizeArabicForMatch(baseProd);
                 const stockItem = warehouseData.find(w => {
@@ -787,20 +781,20 @@
                 ...o,
                 awb: String(o.awb || '').trim(),
                 source: o.source || (String(o.awb).startsWith('EGW') ? 'E-Gateway' : 'يدوي'),
-                merchant: o.merchant || 'بيبون ستور',
-                recipient: o.recipient || 'عميل',
+                merchant: String(o.merchant || 'Piu Poin').trim(),
+                recipient: String(o.recipient || 'عميل').trim(),
                 phone: String(o.phone || ''),
-                gov: o.gov || 'القاهرة',
-                address: o.address || '',
-                items: o.items || 'طرد شحن',
-                notes: o.notes || '',
+                gov: String(o.gov || 'القاهرة').trim(),
+                address: String(o.address || ''),
+                items: String(o.items || 'طرد شحن'),
+                notes: String(o.notes || ''),
                 prodPrice: parseFloat(o.prodPrice) || 0,
                 fee: parseFloat(o.fee) || 0,
                 packFee: parseFloat(o.packFee) || 0,
                 paid: parseFloat(o.paid) || 0,
-                courier: o.courier || 'بدون مندوب',
+                courier: String(o.courier || 'بدون مندوب').trim(),
                 courierComm: parseFloat(o.courierComm) || 20,
-                status: o.status || 'جاهز للشحن',
+                status: String(o.status || 'جاهز للشحن').trim(),
                 showShipInv: o.showShipInv !== false && o.showShipInv !== 'FALSE' && o.showShipInv !== 'false',
                 settledMerchant: o.settledMerchant === true || o.settledMerchant === 'TRUE' || o.settledMerchant === 'true',
                 settledCourier: o.settledCourier === true || o.settledCourier === 'TRUE' || o.settledCourier === 'true',
@@ -832,11 +826,31 @@
                 if (coreRes && coreRes.status === 'success') {
                     connected = true;
                     if (Array.isArray(coreRes.merchants)) {
-                        const cleanMer = coreRes.merchants.filter(m => m.store).map(m => ({ ...m, discount: parseFloat(m.discount) || 0, shopify: m.shopify === true || m.shopify === 'TRUE' || m.shopify === 'true', egateway: true }));
+                        const cleanMer = coreRes.merchants.filter(m => m.store).map(m => ({
+                            ...m,
+                            code: String(m.code || 'MER-101').trim(),
+                            store: String(m.store || '').trim(),
+                            owner: String(m.owner || '').trim(),
+                            phone: String(m.phone || '').trim(),
+                            user: String(m.user || '').trim(),
+                            pass: String(m.pass !== undefined && m.pass !== '' ? m.pass : '123456').trim(),
+                            discount: parseFloat(m.discount) || 0,
+                            shopify: m.shopify === true || m.shopify === 'TRUE' || m.shopify === 'true',
+                            egateway: true
+                        }));
                         if (cleanMer.length > 0) merchantsData.splice(0, merchantsData.length, ...cleanMer);
                     }
                     if (Array.isArray(coreRes.couriers)) {
-                        const cleanCour = coreRes.couriers.filter(c => c.name).map(c => ({ ...c, comm: parseFloat(c.comm) || 20 }));
+                        const cleanCour = coreRes.couriers.filter(c => c.name).map(c => ({
+                            ...c,
+                            id: String(c.id || 'CR-01').trim(),
+                            name: String(c.name || '').trim(),
+                            phone: String(c.phone || '').trim(),
+                            user: String(c.user || '').trim(),
+                            pass: String(c.pass !== undefined && c.pass !== '' ? c.pass : '123456').trim(),
+                            zone: String(c.zone || '').trim(),
+                            comm: parseFloat(c.comm) || 20
+                        }));
                         if (cleanCour.length > 0) couriersData.splice(0, couriersData.length, ...cleanCour);
                     }
                     if (Array.isArray(coreRes.zones) && coreRes.zones.length > 0) {
@@ -1046,7 +1060,6 @@
                     <div class="modal-body-scroll p-4 space-y-3.5">
                         <div class="flex justify-between items-center border-b pb-2"><span class="text-slate-400 font-bold">البوليصة:</span><strong id="pn-awb" class="font-mono font-black text-brand"></strong></div>
 
-                        <!-- الصنف الأساسي المفصول للمخزن (مثل: شنط تخزين) -->
                         <div class="p-3.5 rounded-xl bg-orange-50 border-2 border-orange-300 space-y-1">
                             <span class="text-[11px] font-extrabold text-orange-800 block"><i class="fa-solid fa-warehouse ml-1"></i> الصنف الأساسي المطلوب سحبه من المخزن:</span>
                             <div id="pn-base-product" class="text-sm font-black text-slate-900"></div>
@@ -1136,7 +1149,7 @@
 
             <div id="modal-merchant" onclick="handleBackdropClick(event, 'modal-merchant')" class="modal-backdrop fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-3 sm:p-4 z-50">
                 <div class="modal-card bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden text-xs">
-                    <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 id="modal-mer-title" class="font-extrabold text-sm sm:text-base">إنشاء حساب تاجر</h3><button onclick="closeModal('modal-merchant')" class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold"><i class="fa-solid fa-xmark"></i></button></div>
+                    <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 id="modal-mer-title" class="font-extrabold text-sm sm:text-base">إنشاء / تعديل حساب تاجر</h3><button onclick="closeModal('modal-merchant')" class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold"><i class="fa-solid fa-xmark"></i></button></div>
                     <input type="hidden" id="mer-edit-idx" value="-1">
                     <div class="modal-body-scroll p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div><label class="font-bold block mb-1">اسم المتجر *</label><input id="mer-store" type="text" class="w-full p-2.5 border rounded-xl"></div>
@@ -1206,7 +1219,7 @@
                             </table>
                         </div>
                     </div>
-                    <div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button onclick="closeModal('modal-courier-details')" class="px-4 py-2 bg-slate-200 rounded-xl font-bold">إغلاق</button><button onclick="receiveSelectedCourierOrders()" class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-black shadow">استلام المحدد بالفرع وتحديث العهدة</button></div>
+                    <div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button onclick="closeModal('modal-courier-details')" class="px-4 py-2 bg-slate-200 rounded-xl font-bold">إلغاء</button><button onclick="receiveSelectedCourierOrders()" class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-black shadow">استلام المحدد بالفرع وتحديث العهدة</button></div>
                 </div>
             </div>
 
@@ -1476,13 +1489,21 @@
             if (!skipPush) { renderAll(); pushToOpsDB(); }
         }
 
+        function isSameMerchantStore(orderMerchant, merchantStore) {
+            const a = String(orderMerchant || '').trim().toLowerCase();
+            const b = String(merchantStore || '').trim().toLowerCase();
+            if (a === b) return true;
+            if ((a === 'بيبون ستور' || a === 'piu poin') && (b === 'بيبون ستور' || b === 'piu poin')) return true;
+            return false;
+        }
+
         function calcMerchantBalance(storeName) {
-            return ordersData.filter(o => o.merchant === storeName && !o.settledMerchant && ['تم التسليم', 'تم التسليم جزئي', 'مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن'].includes(o.status)).reduce((sum, o) => sum + calcOrderFinancials(o).netMerchant, 0);
+            return ordersData.filter(o => isSameMerchantStore(o.merchant, storeName) && !o.settledMerchant && ['تم التسليم', 'تم التسليم جزئي', 'مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن'].includes(o.status)).reduce((sum, o) => sum + calcOrderFinancials(o).netMerchant, 0);
         }
 
         function renderMerchants() {
             document.getElementById('merchants-tbody').innerHTML = merchantsData.map((m, idx) => {
-                const merOrdersCount = ordersData.filter(o => o.merchant === m.store).length, balance = calcMerchantBalance(m.store);
+                const merOrdersCount = ordersData.filter(o => isSameMerchantStore(o.merchant, m.store)).length, balance = calcMerchantBalance(m.store);
                 return `<tr class="hover:bg-slate-50"><td class="p-3.5 font-black text-purple-700">#${m.code}</td><td class="p-3.5"><button onclick="openMerchantSheetModal('${m.store}')" class="font-black text-slate-900 text-sm hover:text-brand underline">${m.store}</button><div class="text-[11px] text-slate-400">المالك: ${m.owner}</div></td><td class="p-3.5"><div class="font-bold">${m.phone}</div><div class="text-[10px] text-slate-400">يوزر: <code>${m.user}</code> | باسورد: <code>${m.pass}</code></div></td><td class="p-3.5 font-extrabold text-emerald-600">${m.discount > 0 ? 'خصم ' + m.discount + ' ج.م' : 'سعر أساسي'}</td><td class="p-3.5 font-black">${merOrdersCount} أوردر</td><td class="p-3.5"><div class="flex items-center gap-1">${getSourceBadgeHTML('E-Gateway')}${m.shopify ? getSourceBadgeHTML('Shopify') : ''}</div></td><td class="p-3.5 font-black text-base ${balance >= 0 ? 'text-emerald-700' : 'text-rose-600'}">${balance.toLocaleString()} ج.م</td><td class="p-3.5"><div class="flex items-center justify-center gap-1.5"><button onclick="openMerchantSheetModal('${m.store}')" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg font-bold text-[11px]">أوردراته وفاتورة PDF</button><a href="https://wa.me/2${m.phone}" target="_blank" class="w-7 h-7 bg-emerald-50 text-emerald-700 rounded-lg flex items-center justify-center"><i class="fa-brands fa-whatsapp"></i></a><button onclick="openMerchantModal(${idx})" class="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-pen-to-square"></i></button></div></td></tr>`;
             }).join('');
             document.getElementById('overview-merchants-list').innerHTML = merchantsData.map(m => `<div class="p-3 rounded-xl bg-slate-50 border flex items-center justify-between"><div><button onclick="openMerchantSheetModal('${m.store}')" class="font-extrabold text-slate-900 underline">${m.store}</button><div class="text-[10px] text-slate-400">خصم: ${m.discount} ج.م</div></div><div class="text-left"><div class="font-black text-emerald-600 text-sm">${calcMerchantBalance(m.store).toLocaleString()} ج.م</div><button onclick="openMerchantSheetModal('${m.store}')" class="text-[10px] text-brand font-bold underline">الفاتورة</button></div></div>`).join('');
@@ -1491,10 +1512,10 @@
 
         function openMerchantSheetModal(storeName) {
             activeMerchantSheetStore = storeName;
-            const m = merchantsData.find(x => x.store === storeName);
+            const m = merchantsData.find(x => x.store === storeName) || merchantsData[0];
             document.getElementById('ms-merchant-info').innerText = `التاجر: ${m.store} (#${m.code}) | هاتف: ${m.phone}`;
             document.getElementById('ms-date').innerText = getFormattedNow();
-            document.getElementById('ms-orders-tbody').innerHTML = ordersData.filter(o => o.merchant === storeName).map(o => {
+            document.getElementById('ms-orders-tbody').innerHTML = ordersData.filter(o => isSameMerchantStore(o.merchant, storeName)).map(o => {
                 const realIdx = ordersData.indexOf(o), fin = calcOrderFinancials(o);
                 return `<tr class="${o.settledMerchant ? 'bg-slate-100 opacity-60' : ''}"><td class="p-2 no-print"><input type="checkbox" class="ms-order-cb w-4 h-4 accent-purple-600" data-idx="${realIdx}" ${!o.settledMerchant ? 'checked' : 'disabled'} onchange="recalcMerchantSheetSummary()"></td><td class="p-2 font-black">#${o.awb} ${getSourceBadgeHTML(o.source)}</td><td class="p-2 font-bold">${o.recipient} (${o.gov})</td><td class="p-2">${o.prodPrice} ج.م</td><td class="p-2">${o.status === 'تم الإلغاء' ? 0 : o.fee} ج.م</td><td class="p-2 font-bold">${fin.totalCod} ج.م</td><td class="p-2 font-bold text-blue-700">${o.paid} ج.م</td><td class="p-2 text-[10px]">${o.actionAt}</td><td class="p-2 font-bold">${o.status}</td><td class="p-2 font-black text-emerald-700">${fin.netMerchant} ج.م</td><td class="p-2 font-bold">${o.settledMerchant ? 'تم التوريد ✓' : 'قيد التوريد'}</td></tr>`;
             }).join('');
@@ -1813,7 +1834,7 @@
             openModal('modal-merchant');
         }
         function saveMerchantModal() {
-            const editIdx = parseInt(document.getElementById('mer-edit-idx').value), store = document.getElementById('mer-store').value.trim(), owner = document.getElementById('mer-owner').value.trim() || 'مالك المتجر', phone = document.getElementById('mer-phone').value.trim() || '01000000000', user = document.getElementById('mer-user').value.trim() || 'merchant', pass = document.getElementById('mer-pass').value.trim() || '123456', discount = parseFloat(document.getElementById('mer-discount').value) || 0;
+            const editIdx = parseInt(document.getElementById('mer-edit-idx').value), store = String(document.getElementById('mer-store').value || '').trim(), owner = String(document.getElementById('mer-owner').value || '').trim() || 'مالك المتجر', phone = String(document.getElementById('mer-phone').value || '').trim() || '01000000000', user = String(document.getElementById('mer-user').value || '').trim() || 'merchant', pass = String(document.getElementById('mer-pass').value || '').trim() || '123456', discount = parseFloat(document.getElementById('mer-discount').value) || 0;
             if (!store) return alert('اكتب اسم المتجر');
             if (editIdx > -1) Object.assign(merchantsData[editIdx], { store, owner, phone, user, pass, discount });
             else merchantsData.unshift({ code: 'MER-' + (101 + merchantsData.length), store, owner, phone, user, pass, discount, shopify: true, egateway: true });
@@ -1827,7 +1848,7 @@
             openModal('modal-courier');
         }
         function saveCourierModal() {
-            const editIdx = parseInt(document.getElementById('cour-edit-idx').value), name = document.getElementById('cour-name').value.trim(), phone = document.getElementById('cour-phone').value.trim() || '01000000000', user = document.getElementById('cour-user').value.trim() || 'courier', pass = document.getElementById('cour-pass').value.trim() || '123456', zone = document.getElementById('cour-zone').value.trim() || 'القاهرة', comm = parseFloat(document.getElementById('cour-comm').value) || 20;
+            const editIdx = parseInt(document.getElementById('cour-edit-idx').value), name = String(document.getElementById('cour-name').value || '').trim(), phone = String(document.getElementById('cour-phone').value || '').trim() || '01000000000', user = String(document.getElementById('cour-user').value || '').trim() || 'courier', pass = String(document.getElementById('cour-pass').value || '').trim() || '123456', zone = String(document.getElementById('cour-zone').value || '').trim() || 'القاهرة', comm = parseFloat(document.getElementById('cour-comm').value) || 20;
             if (!name) return alert('اكتب اسم المندوب');
             if (editIdx > -1) Object.assign(couriersData[editIdx], { name, phone, user, pass, zone, comm });
             else couriersData.push({ id: 'CR-0' + (couriersData.length + 1), name, phone, user, pass, zone, comm });
