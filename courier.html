@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- مكتبة قراءة الباركود و QR الفعلية بالكاميرا -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root { --brand-primary: #0891b2; --brand-hover: #0e7490; --brand-light: #ecfeff; --sidebar-bg: #0f172a; }
@@ -22,7 +21,6 @@
         .egateway-grad { background: linear-gradient(135deg, #06b6d4 0%, #0284c7 50%, #1e3a8a 100%); }
         .egateway-badge { background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(30,58,138,0.15)); color: #0369a1; border: 1px solid rgba(6,182,212,0.45); }
 
-        /* شاشة التحميل السحابية الاحترافية */
         #prime-cloud-preloader {
             position: fixed; inset: 0; z-index: 99999;
             background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
@@ -63,7 +61,6 @@
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 99px; }
 
-        /* حاوية الطباعة الحرة متعددة الصفحات */
         #print-mount-root { display: none; }
 
         @media print {
@@ -77,7 +74,7 @@
 </head>
 <body class="text-slate-800 h-screen flex flex-col">
 
-    <!-- ================= شاشة التحميل السحابية ================= -->
+    <!-- شاشة التحميل السحابية -->
     <div id="prime-cloud-preloader">
         <div class="relative flex items-center justify-center mb-5">
             <div class="loader-ring"></div>
@@ -99,7 +96,6 @@
         <span id="prime-sync-text">متصل بـ Google Sheets ✓</span>
     </div>
 
-    <!-- خلفية القائمة للموبايل -->
     <div id="mobile-sidebar-backdrop" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-slate-900/60 z-50 hidden lg:hidden"></div>
 
     <!-- ================= 1. الهيدر العلوي للمندوب ================= -->
@@ -114,7 +110,6 @@
                 <button onclick="setSidebarMode('closed')" id="mode-closed-btn" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-rose-600 transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <!-- شارة اسم المندوب المسجل دخوله -->
             <div onclick="switchTab('tab-profile', document.getElementById('nav-btn-profile'))" class="cursor-pointer flex items-center gap-2 bg-cyan-50 border border-cyan-200 px-3 py-1.5 rounded-xl text-xs">
                 <div class="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center overflow-hidden flex-shrink-0 border border-cyan-300">
                     <i id="header-avatar-icon" class="fa-solid fa-motorcycle text-[10px]"></i>
@@ -128,7 +123,6 @@
             </button>
         </div>
 
-        <!-- أزرار الإجراءات السريعة للمندوب -->
         <div class="flex items-center gap-1.5 sm:gap-2 order-2 lg:order-3">
             <button onclick="openCameraScannerModal()" class="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 rounded-xl text-xs font-black shadow-sm flex items-center gap-1.5 transition">
                 <i class="fa-solid fa-camera"></i><span>مسح باركود</span>
@@ -141,7 +135,6 @@
             </a>
         </div>
 
-        <!-- بحث أو تنفيذ سريع برقم البوليصة -->
         <div class="w-full lg:w-auto order-3 lg:order-2 flex items-center gap-1.5 flex-1 lg:max-w-md bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 focus-within:border-cyan-500 focus-within:bg-white transition">
             <i class="fa-solid fa-barcode text-slate-400 text-sm"></i>
             <input id="quick-awb-input" oninput="filterTasksBySearch(this.value)" type="text" placeholder="ابحث بالبوليصة، اسم العميل، الموبايل، أو العنوان..." class="bg-transparent text-xs font-bold outline-none flex-1">
@@ -212,9 +205,8 @@
         <!-- ================= 3. منطقة المحتوى الرئيسي للمندوب ================= -->
         <main class="flex-1 h-full overflow-y-auto p-3 sm:p-5 md:p-6 pb-24 lg:pb-6 space-y-5">
 
-            <!-- ================= الصفحة 1: خط السير ومهام التوصيل الميدانية ================= -->
+            <!-- الصفحة 1: خط السير ومهام التوصيل الميدانية -->
             <div id="tab-tasks" class="tab-pane active space-y-4">
-                <!-- الكروت الـ 4 السريعة لعهدة المندوب اليومية -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     <div class="bg-white p-4 rounded-2xl border-r-4 border-r-amber-500 border border-slate-200 shadow-sm">
                         <div class="flex justify-between items-center">
@@ -253,7 +245,6 @@
                     </div>
                 </div>
 
-                <!-- شريط الفلترة السريعة للمندوب في الشارع -->
                 <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div class="flex flex-wrap gap-1.5">
                         <button onclick="setCourierFilter('ALL')" id="cflt-ALL" class="px-3.5 py-2 rounded-xl font-black bg-slate-900 text-white transition">كل عهدتي (<span id="cnt-all">0</span>)</button>
@@ -268,11 +259,10 @@
                     </div>
                 </div>
 
-                <!-- قائمة كروت الشحنات الميدانية للمندوب -->
                 <div id="courier-tasks-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
             </div>
 
-            <!-- ================= الصفحة 2: عهدتي المالية والمرتجعات وتقفيل الحساب ================= -->
+            <!-- الصفحة 2: عهدتي المالية والمرتجعات وتقفيل الحساب -->
             <div id="tab-custody" class="tab-pane space-y-5">
                 <div class="bg-gradient-to-l from-slate-900 via-slate-800 to-cyan-950 text-white p-5 sm:p-6 rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-4">
                     <div>
@@ -285,7 +275,6 @@
                     </button>
                 </div>
 
-                <!-- المنطقة القابلة للطباعة لكشف عهدة المندوب -->
                 <div id="courier-manifest-printable" class="bg-white border-2 border-slate-800 rounded-2xl p-5 space-y-4 text-xs shadow-sm">
                     <div class="flex flex-wrap justify-between items-center border-b-2 border-slate-800 pb-3 gap-2">
                         <div>
@@ -313,11 +302,11 @@
                                     <th class="p-2.5">البوليصة</th>
                                     <th class="p-2.5">التاجر</th>
                                     <th class="p-2.5">المستلم والعنوان</th>
+                                    <th class="p-2.5">المنتج والقطع</th>
                                     <th class="p-2.5">المطلوب (COD)</th>
                                     <th class="p-2.5">المحصل فعلياً</th>
                                     <th class="p-2.5">عمولة المندوب</th>
                                     <th class="p-2.5">صافي الخزنة</th>
-                                    <th class="p-2.5">آخر إجراء وتاريخه</th>
                                     <th class="p-2.5">الحالة</th>
                                 </tr>
                             </thead>
@@ -327,7 +316,7 @@
                 </div>
             </div>
 
-            <!-- ================= الصفحة 3: المؤجل ومشاكل التسليم وسجل محاولات الاتصال (NDR) ================= -->
+            <!-- الصفحة 3: المؤجل ومشاكل التسليم (NDR) -->
             <div id="tab-ndr" class="tab-pane space-y-4">
                 <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
                     <h2 class="font-extrabold text-base text-rose-600 mb-1"><i class="fa-solid fa-phone-slash ml-1"></i> الشحنات المؤجلة والمرتجعة وسجل محاولات الاتصال</h2>
@@ -336,7 +325,7 @@
                 </div>
             </div>
 
-            <!-- ================= الصفحة 4: الملف الشخصي للمندوب ================= -->
+            <!-- الصفحة 4: الملف الشخصي للمندوب -->
             <div id="tab-profile" class="tab-pane space-y-5">
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
                     <div>
@@ -350,7 +339,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- رفع الصورة الشخصية للمندوب -->
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center justify-between space-y-4">
                         <div class="space-y-3 w-full flex flex-col items-center">
                             <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-extrabold text-[11px] border border-emerald-200">
@@ -386,7 +374,6 @@
                         </div>
                     </div>
 
-                    <!-- بيانات المندوب المقفولة للقراءة فقط -->
                     <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-5">
                         <div>
                             <div class="flex items-center justify-between border-b pb-3 mb-4">
@@ -446,7 +433,7 @@
                                 </div>
 
                                 <div class="sm:col-span-2">
-                                    <label class="font-bold text-slate-500 block mb-1">العمولة الأساسية المعتمدة للشحنة (تزيد في الأوردرات البعيدة بقرار الإدارة)</label>
+                                    <label class="font-bold text-slate-500 block mb-1">العمولة الأساسية المعتمدة للشحنة</label>
                                     <div class="relative">
                                         <input id="prof-input-comm" type="text" readonly disabled class="w-full p-3 pl-9 rounded-xl border border-emerald-200 bg-emerald-50/60 font-black text-emerald-800 cursor-not-allowed">
                                         <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-emerald-600"></i>
@@ -479,20 +466,18 @@
 
     <!-- شريط التنقل السفلي السريع للمندوب على الموبايل -->
     <nav class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 px-2 py-1.5 flex items-center justify-around z-40 shadow-2xl text-[10px] font-extrabold text-slate-600">
-        <button onclick="switchTab('tab-tasks', document.getElementById('nav-btn-tasks'))" class="flex flex-col items-center gap-1 py-1 px-2 text-brand"><i class="fa-solid fa-route text-base"></i><span>خط السير</span></button>
-        <button onclick="switchTab('tab-custody', document.getElementById('nav-btn-custody'))" class="flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-sack-dollar text-base text-emerald-600"></i><span>عهدتي</span></button>
+        <button id="mob-nav-tasks" onclick="switchTab('tab-tasks', document.getElementById('nav-btn-tasks'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2 text-brand"><i class="fa-solid fa-route text-base"></i><span>خط السير</span></button>
+        <button id="mob-nav-custody" onclick="switchTab('tab-custody', document.getElementById('nav-btn-custody'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-sack-dollar text-base text-emerald-600"></i><span>عهدتي</span></button>
         <button onclick="openCameraScannerModal()" class="flex flex-col items-center justify-center -mt-5 w-12 h-12 rounded-2xl bg-slate-900 text-amber-400 shadow-lg border-2 border-white"><i class="fa-solid fa-camera text-lg"></i></button>
-        <button onclick="switchTab('tab-ndr', document.getElementById('nav-btn-ndr'))" class="flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-phone-slash text-base text-rose-500"></i><span>المؤجل</span></button>
-        <button onclick="switchTab('tab-profile', document.getElementById('nav-btn-profile'))" class="flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-id-badge text-base text-slate-800"></i><span>ملفي</span></button>
+        <button id="mob-nav-ndr" onclick="switchTab('tab-ndr', document.getElementById('nav-btn-ndr'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-phone-slash text-base text-rose-500"></i><span>المؤجل</span></button>
+        <button id="mob-nav-profile" onclick="switchTab('tab-profile', document.getElementById('nav-btn-profile'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-id-badge text-base text-slate-800"></i><span>ملفي</span></button>
     </nav>
 
     <!-- حاوية النوافذ المنبثقة للمندوب -->
     <div id="modals-container"></div>
-
-    <!-- حاوية الطباعة متعددة الصفحات -->
     <div id="print-mount-root"></div>
 
-    <!-- ================= المحرك البرمجي الفعلي لتطبيق المندوب (نظيف بدون أي محاكاة أو بيانات وهمية) ================= -->
+    <!-- ================= المحرك البرمجي الفعلي لتطبيق المندوب (مع زر الرجوع الذكي للموبايل) ================= -->
     <script>
         const PRIME_CLOUD_URLS = {
             CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzDQzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
@@ -533,22 +518,145 @@
 
         const warehouseData = [];
 
-        // تحديد المندوب المسجل دخوله من شاشة index.html
         let currentCourier = couriersData[0];
         try {
             const session = JSON.parse(localStorage.getItem('swift_active_session') || 'null');
             if (session && (session.role === 'COURIER' || session.zone)) {
-                const found = couriersData.find(c => c.user === session.user || c.name === session.name);
+                const found = couriersData.find(c => String(c.user).toLowerCase() === String(session.user).toLowerCase() || c.name === session.name);
                 if (found) currentCourier = found;
-                else currentCourier = { id: session.id || 'CR-01', name: session.name, phone: session.phone || '01011112222', user: session.user, pass: session.pass || '123456', zone: session.zone || 'القاهرة', comm: parseFloat(session.comm) || 20 };
+                else currentCourier = {
+                    id: String(session.id || 'CR-01'),
+                    name: String(session.name || 'أحمد المندوب'),
+                    phone: String(session.phone || '01011112222'),
+                    user: String(session.user || 'ahmed_cr'),
+                    pass: String(session.pass || '123456'),
+                    zone: String(session.zone || 'القاهرة'),
+                    comm: parseFloat(session.comm) || 20
+                };
             }
         } catch (e) {}
 
-        // مصفوفة الشحنات فارغة تماماً من أي بيانات وهمية - تُملأ فقط من الشيت الفعلي
         const ordersData = [];
-
         let activeFilterMode = 'ALL';
         let activeActionOrderIdx = -1;
+
+        // =========================================================================
+        // المحرك الذكي لتحليل وتنظيف اسم المنتج واستخراج الصنف الأساسي والعدد الصحيح
+        // =========================================================================
+        function extractBaseProductName(offerTitle) {
+            let s = String(offerTitle || '').trim();
+            s = s.replace(/^(عرض|باكيدج|مجموعة|بكج)\s*(الـ?|ال)?\s*\d*\s*/i, '');
+            s = s.replace(/^(قطعتين|ثلاث|تلات|اربع|أربع|خمس|ست|سبع|ثمان|تسع|عشر)\s*(قطع|قطعه|قطعة)?\s*(من)?\s*/i, '');
+            s = s.replace(/^\d+\s*(قطع|قطعه|قطعة|عبوة|عبوه)?\s*(من)?\s*/i, '');
+            s = s.replace(/^(شنطة|شنطه)\b/i, 'شنط');
+            s = s.replace(/\s+/g, ' ').trim();
+            return s || String(offerTitle || '').trim();
+        }
+
+        function analyzeOrderItemsSmart(rawText) {
+            if (!rawText) {
+                return { cleanDisplay: 'طرد شحن', totalPieces: 1, baseSummaryText: 'طرد شحن (1 قطعة)', baseGroups: {}, offerLines: ['طرد شحن'] };
+            }
+
+            const segments = String(rawText).split('+').map(s => s.trim()).filter(Boolean);
+            let totalPieces = 0;
+            const cleanDisplayParts = [];
+            const offerLines = [];
+            const baseGroups = {};
+
+            const arabicNums = { 'واحد': 1, 'قطعتين': 2, 'اثنين': 2, 'ثلاث': 3, 'تلات': 3, 'اربع': 4, 'أربع': 4, 'خمس': 5, 'ست': 6, 'سبع': 7, 'السبع': 7, 'ثمان': 8, 'تسع': 9, 'عشر': 10 };
+
+            segments.forEach(seg => {
+                let cartMult = 1;
+                let coreName = seg;
+
+                const suffixMatch = seg.match(/\s*-\s*عرض\s*(\d+)\s*(قطع|قطعه|قطعة|عبوة|عبوه)?\s*$/i);
+                if (suffixMatch) {
+                    cartMult = parseInt(suffixMatch[1]) || 1;
+                    coreName = seg.slice(0, suffixMatch.index).trim();
+                }
+
+                let bundleQty = 0;
+                const numMatch = coreName.match(/(\d+)/);
+                if (numMatch) {
+                    bundleQty = parseInt(numMatch[1]) || 0;
+                } else {
+                    for (const [word, num] of Object.entries(arabicNums)) {
+                        if (coreName.includes(word)) { bundleQty = num; break; }
+                    }
+                }
+
+                let segPieces = 1;
+                let cleanSegText = coreName;
+
+                if (bundleQty > 0) {
+                    segPieces = bundleQty * cartMult;
+                    cleanSegText = cartMult > 1 ? `${coreName} (×${cartMult})` : coreName;
+                } else {
+                    segPieces = cartMult;
+                    cleanSegText = cartMult > 1 ? `${coreName} (${cartMult} قطع)` : coreName;
+                }
+
+                totalPieces += segPieces;
+                cleanDisplayParts.push(cleanSegText);
+
+                const baseProd = extractBaseProductName(coreName);
+                if (!baseGroups[baseProd]) baseGroups[baseProd] = 0;
+                baseGroups[baseProd] += segPieces;
+
+                offerLines.push(`${cleanSegText} ⬅️ (${segPieces} قطعة من: ${baseProd})`);
+            });
+
+            const baseSummaryText = Object.entries(baseGroups)
+                .map(([bName, bQty]) => `${bName} (إجمالي ${bQty} قطعة)`)
+                .join(' + ');
+
+            return {
+                cleanDisplay: cleanDisplayParts.join(' + '),
+                totalPieces: totalPieces || 1,
+                baseSummaryText: baseSummaryText || 'غير محدد',
+                baseGroups: baseGroups,
+                offerLines: offerLines
+            };
+        }
+
+        function normalizeArabicForMatch(str) {
+            return String(str || '')
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/ة/g, 'ه')
+                .replace(/ى/g, 'ي')
+                .replace(/شنطه/g, 'شنط')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+        }
+
+        function syncWarehouseStockForOrder(order, newStatus) {
+            const shipStates = ['جاهز للشحن', 'تم الشحن مع المندوب', 'تم التسليم', 'تم التسليم جزئي'];
+            const returnStates = ['مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن', 'تم الإلغاء'];
+            const analysis = analyzeOrderItemsSmart(order.items);
+            let matchedAny = false;
+
+            for (const [baseProd, qty] of Object.entries(analysis.baseGroups)) {
+                const normBase = normalizeArabicForMatch(baseProd);
+                const stockItem = warehouseData.find(w => {
+                    const normW = normalizeArabicForMatch(w.name);
+                    return normBase.includes(normW) || normW.includes(normBase);
+                });
+                if (stockItem) {
+                    matchedAny = true;
+                    if (shipStates.includes(newStatus) && !order.stockDeducted) {
+                        stockItem.stock = Math.max(0, stockItem.stock - qty);
+                    } else if (returnStates.includes(newStatus) && order.stockDeducted) {
+                        stockItem.stock += qty;
+                    }
+                }
+            }
+            if (matchedAny) {
+                if (shipStates.includes(newStatus) && !order.stockDeducted) order.stockDeducted = true;
+                else if (returnStates.includes(newStatus) && order.stockDeducted) order.stockDeducted = false;
+            }
+        }
 
         function setSyncStatus(state, msg) {
             const dot = document.getElementById('prime-sync-dot');
@@ -564,20 +672,20 @@
                 ...o,
                 awb: String(o.awb || '').trim(),
                 source: o.source || (String(o.awb).startsWith('EGW') ? 'E-Gateway' : 'يدوي'),
-                merchant: o.merchant || 'بيبون ستور',
-                recipient: o.recipient || 'عميل',
+                merchant: String(o.merchant || 'Piu Poin').trim(),
+                recipient: String(o.recipient || 'عميل').trim(),
                 phone: String(o.phone || ''),
-                gov: o.gov || 'القاهرة',
-                address: o.address || '',
-                items: o.items || 'طرد شحن',
-                notes: o.notes || '',
+                gov: String(o.gov || 'القاهرة').trim(),
+                address: String(o.address || ''),
+                items: String(o.items || 'طرد شحن'),
+                notes: String(o.notes || ''),
                 prodPrice: parseFloat(o.prodPrice) || 0,
                 fee: parseFloat(o.fee) || 0,
                 packFee: parseFloat(o.packFee) || 0,
                 paid: parseFloat(o.paid) || 0,
-                courier: o.courier || 'بدون مندوب',
+                courier: String(o.courier || 'بدون مندوب').trim(),
                 courierComm: parseFloat(o.courierComm) || 20,
-                status: o.status || 'جاهز للشحن',
+                status: String(o.status || 'جاهز للشحن').trim(),
                 callAttempts: parseInt(o.callAttempts) || 0,
                 showShipInv: o.showShipInv !== false && o.showShipInv !== 'FALSE' && o.showShipInv !== 'false',
                 settledMerchant: o.settledMerchant === true || o.settledMerchant === 'TRUE' || o.settledMerchant === 'true',
@@ -587,7 +695,6 @@
             };
         }
 
-        // ================= دوال المزامنة السحابية الحقيقية مع Google Sheets =================
         async function pullAllFromGoogleSheets(manualRefresh = false) {
             if (manualRefresh) setSyncStatus('saving', '⏳ جاري تحديث خط سيرك وعهدتك من الشيتات...');
             const bar = document.getElementById('prime-loader-bar');
@@ -612,6 +719,12 @@
                     if (Array.isArray(coreRes.couriers) && coreRes.couriers.length > 0) {
                         const cleanCour = coreRes.couriers.filter(c => c.name).map(c => ({
                             ...c,
+                            id: String(c.id || 'CR-01').trim(),
+                            name: String(c.name || '').trim(),
+                            phone: String(c.phone || '').trim(),
+                            user: String(c.user || '').trim(),
+                            pass: String(c.pass !== undefined && c.pass !== '' ? c.pass : '123456').trim(),
+                            zone: String(c.zone || '').trim(),
                             comm: parseFloat(c.comm) || 20
                         }));
                         if (cleanCour.length > 0) {
@@ -631,7 +744,6 @@
                     }
                 }
 
-                // قراءة الشحنات الحقيقية من الشيت الثاني كما هي (حتى لو كانت 0 شحنة)
                 if (opsRes && opsRes.status === 'success' && Array.isArray(opsRes.orders)) {
                     connected = true;
                     const cleanOrders = opsRes.orders.filter(o => o.awb && String(o.awb).trim() !== '').map(formatRawSheetOrder);
@@ -658,7 +770,6 @@
             }, 250);
         }
 
-        // حفظ محمي بالدمج الذكي حتى لا يمسح المندوب أي شحنات جديدة أضيفت في الشركة
         async function pushToOpsDB() {
             if (!isInitialCloudLoaded) return;
             setSyncStatus('saving', '⏳ جاري حفظ الحالة والتحصيل في جوجل شيت...');
@@ -693,30 +804,6 @@
                 setSyncStatus('ok', '✅ تم حفظ التحصيل والحالة فعلياً في Google Sheets ✓');
             } catch (e) {
                 setSyncStatus('error', '❌ فشل الحفظ في شيت الشحنات!');
-            }
-        }
-
-        function parseOfferQuantity(itemText) {
-            if (!itemText) return 1;
-            const str = String(itemText);
-            const arabicNums = { 'واحد': 1, 'قطعتين': 2, 'اثنين': 2, 'ثلاث': 3, 'تلات': 3, 'اربع': 4, 'أربع': 4, 'خمس': 5, 'ست': 6, 'سبع': 7, 'السبع': 7, 'ثمان': 8, 'تسع': 9, 'عشر': 10 };
-            for (const [word, num] of Object.entries(arabicNums)) { if (str.includes(word)) return num; }
-            const match = str.match(/(\d+)\s*(قطع|قطعه|قطعة|عبوة|عبوه|شنط|شنطة|x|X|باكيدج|عرض)/i) || str.match(/(عرض|باكيدج)\s*(\d+)/i);
-            return match ? (parseInt(match[1]) || parseInt(match[2]) || 1) : 1;
-        }
-
-        function syncWarehouseStockForOrder(order, newStatus) {
-            const shipStates = ['جاهز للشحن', 'تم الشحن مع المندوب', 'تم التسليم', 'تم التسليم جزئي'];
-            const returnStates = ['مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن', 'تم الإلغاء'];
-            const stockItem = warehouseData.find(w => w.merchant === order.merchant && String(order.items).includes(w.name));
-            if (!stockItem) return;
-            const qty = parseOfferQuantity(order.items);
-            if (shipStates.includes(newStatus) && !order.stockDeducted) {
-                stockItem.stock = Math.max(0, stockItem.stock - qty);
-                order.stockDeducted = true;
-            } else if (returnStates.includes(newStatus) && order.stockDeducted) {
-                stockItem.stock += qty;
-                order.stockDeducted = false;
             }
         }
 
@@ -799,7 +886,7 @@
                 </div>
             </div>
 
-            <!-- 3. نافذة ماسح الكاميرا الفعلي للمندوب (بدون محاكاة) -->
+            <!-- 3. نافذة ماسح الكاميرا الفعلي للمندوب -->
             <div id="modal-camera-scanner" onclick="handleBackdropClick(event, 'modal-camera-scanner')" class="modal-backdrop fixed inset-0 bg-slate-900/75 hidden items-center justify-center p-3 sm:p-4 z-50">
                 <div class="modal-card bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden text-xs">
                     <div class="p-4 border-b bg-slate-900 text-white flex justify-between items-center">
@@ -910,15 +997,16 @@
                 const totalCod = (parseFloat(o.prodPrice) || 0) + (parseFloat(o.fee) || 0);
                 const earnedComm = (String(o.status).includes('تم التسليم') || o.status === 'مرتجع وتم دفع الشحن') ? (parseFloat(o.courierComm) || 20) : 0;
                 const netRow = (parseFloat(o.paid) || 0) - earnedComm;
+                const itemAnalysis = analyzeOrderItemsSmart(o.items);
                 return `<tr>
                     <td class="p-2.5 font-black">#${o.awb} ${getSourceBadgeHTML(o.source)}</td>
                     <td class="p-2.5 font-bold">${o.merchant}</td>
                     <td class="p-2.5 font-bold">${o.recipient} <span class="text-[10px] text-slate-500 block">${o.gov} - ${o.address}</span></td>
+                    <td class="p-2.5 font-bold">${itemAnalysis.cleanDisplay} <span class="text-[10px] text-orange-700 font-black">(${itemAnalysis.totalPieces} ق)</span></td>
                     <td class="p-2.5 font-bold">${totalCod} ج.م</td>
                     <td class="p-2.5 font-black text-blue-700">${o.paid} ج.م</td>
                     <td class="p-2.5 font-black text-emerald-600">${earnedComm} ج.م</td>
                     <td class="p-2.5 font-black text-slate-900">${netRow} ج.م</td>
-                    <td class="p-2.5 text-[10px]">${o.actionAt || o.createdAt}</td>
                     <td class="p-2.5 font-bold">${o.status}</td>
                 </tr>`;
             }).join('');
@@ -947,6 +1035,7 @@
                 const mapsQuery = encodeURIComponent(`${o.gov} ${o.address}`);
                 const isDone = String(o.status).includes('تم التسليم');
                 const isIssue = String(o.status).includes('مرتجع') || o.status === 'مؤجل';
+                const itemAnalysis = analyzeOrderItemsSmart(o.items);
 
                 const badgeClass = isDone ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                     : isIssue ? 'bg-rose-100 text-rose-800 border-rose-300'
@@ -978,7 +1067,11 @@
                         </div>
 
                         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs space-y-1">
-                            <div><span class="text-slate-400 font-bold">الطرد: </span><strong class="text-slate-900">${o.items}</strong></div>
+                            <div class="flex items-center justify-between gap-2">
+                                <div><span class="text-slate-400 font-bold">الطرد: </span><strong class="text-slate-900">${itemAnalysis.cleanDisplay}</strong></div>
+                                <span class="px-2 py-0.5 bg-orange-100 text-orange-800 rounded font-black text-[10px] flex-shrink-0">${itemAnalysis.totalPieces} قطعة</span>
+                            </div>
+                            <div class="text-[11px] text-orange-700 font-bold">الصنف: ${itemAnalysis.baseSummaryText}</div>
                             ${o.notes ? `<div class="text-amber-800 font-bold"><i class="fa-regular fa-comment-dots ml-1"></i>ملاحظة: ${o.notes}</div>` : ''}
                             <div class="flex items-center justify-between pt-1 border-t text-[10px] text-slate-500 font-bold">
                                 <span><i class="fa-solid fa-clock-rotate-left ml-1"></i>${o.actionAt || o.createdAt}</span>
@@ -1183,7 +1276,6 @@
             window.open(`https://wa.me/201000000000?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // ================= دوال الماسح الفعلي للباركود و QR بالكاميرا للمندوب =================
         function openCameraScannerModal() {
             openModal('modal-camera-scanner');
         }
@@ -1248,15 +1340,128 @@
         }
 
         function setSidebarMode(mode) { const sb = document.getElementById('main-sidebar'); sb.classList.remove('sidebar-full', 'sidebar-mini', 'sidebar-closed'); sb.classList.add('sidebar-' + mode); }
-        function toggleMobileSidebar(open) { const sb = document.getElementById('main-sidebar'), bd = document.getElementById('mobile-sidebar-backdrop'); if (open) { sb.classList.add('mobile-open'); bd.classList.remove('hidden'); } else { sb.classList.remove('mobile-open'); bd.classList.add('hidden'); } }
-        function switchTab(tabId, clickedBtn) { document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active'); if (clickedBtn) { document.querySelectorAll('#main-sidebar .nav-btn').forEach(btn => btn.classList.remove('bg-brand', 'text-white')); clickedBtn.classList.add('bg-brand', 'text-white'); } toggleMobileSidebar(false); }
-        function openModal(id) { document.getElementById(id)?.classList.remove('hidden'); document.getElementById(id)?.classList.add('flex'); }
-        function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); document.getElementById(id)?.classList.remove('flex'); }
-        function handleBackdropClick(event, modalId) { if (event.target.id === modalId) { if (modalId === 'modal-camera-scanner') closeCameraScannerModal(); else closeModal(modalId); } }
+
+        // =========================================================================
+        // محرك زر الرجوع الذكي للموبايل (History API Router)
+        // =========================================================================
+        let isHandlingPopState = false;
+
+        function toggleMobileSidebar(open, skipHistory = false) {
+            const sb = document.getElementById('main-sidebar');
+            const bd = document.getElementById('mobile-sidebar-backdrop');
+            if (open) {
+                sb.classList.add('mobile-open');
+                bd.classList.remove('hidden');
+                if (!skipHistory && !isHandlingPopState) {
+                    history.pushState({ type: 'sidebar' }, '', '#sidebar');
+                }
+            } else {
+                sb.classList.remove('mobile-open');
+                bd.classList.add('hidden');
+            }
+        }
+
+        function switchTab(tabId, clickedBtn, skipHistory = false) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(tabId);
+            if (target) target.classList.add('active');
+
+            const targetSideBtn = clickedBtn || document.getElementById('nav-btn-' + tabId.replace('tab-', ''));
+            if (targetSideBtn) {
+                document.querySelectorAll('#main-sidebar .nav-btn').forEach(btn => btn.classList.remove('bg-brand', 'text-white'));
+                targetSideBtn.classList.add('bg-brand', 'text-white');
+            }
+
+            document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('text-brand'));
+            const mobBtn = document.getElementById('mob-nav-' + tabId.replace('tab-', ''));
+            if (mobBtn) mobBtn.classList.add('text-brand');
+
+            toggleMobileSidebar(false, true);
+
+            if (!skipHistory && !isHandlingPopState) {
+                history.pushState({ type: 'tab', tabId: tabId }, '', '#' + tabId);
+            }
+        }
+
+        function openModal(id) {
+            const m = document.getElementById(id);
+            if (!m) return;
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            if (!isHandlingPopState) {
+                history.pushState({ type: 'modal', modalId: id }, '', '#' + id);
+            }
+        }
+
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            if (!m) return;
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function handleBackdropClick(event, modalId) {
+            if (event.target.id === modalId) {
+                if (modalId === 'modal-camera-scanner') closeCameraScannerModal();
+                else closeModal(modalId);
+            }
+        }
+
+        // اعتراض زر الرجوع في التليفون (Back Button)
+        window.addEventListener('popstate', async () => {
+            isHandlingPopState = true;
+
+            // 1. إذا كانت نافذة الكاميرا مفتوحة، أوقف الكاميرا وأغلقها أولاً
+            const camModal = document.getElementById('modal-camera-scanner');
+            if (camModal && !camModal.classList.contains('hidden')) {
+                await closeCameraScannerModal();
+                const activePane = document.querySelector('.tab-pane.active');
+                history.pushState({ type: 'tab', tabId: activePane ? activePane.id : 'tab-tasks' }, '', '#' + (activePane ? activePane.id : 'tab-tasks'));
+                isHandlingPopState = false;
+                return;
+            }
+
+            // 2. إذا كانت أي نافذة منبثقة مفتوحة، أغلقها فقط
+            const openModals = Array.from(document.querySelectorAll('.modal-backdrop')).filter(m => !m.classList.contains('hidden'));
+            if (openModals.length > 0) {
+                openModals.forEach(m => {
+                    m.classList.add('hidden');
+                    m.classList.remove('flex');
+                });
+                const activePane = document.querySelector('.tab-pane.active');
+                history.pushState({ type: 'tab', tabId: activePane ? activePane.id : 'tab-tasks' }, '', '#' + (activePane ? activePane.id : 'tab-tasks'));
+                isHandlingPopState = false;
+                return;
+            }
+
+            // 3. إذا كانت القائمة الجانبية للموبايل مفتوحة، أغلقها فقط
+            const sb = document.getElementById('main-sidebar');
+            if (sb && sb.classList.contains('mobile-open')) {
+                toggleMobileSidebar(false, true);
+                const activePane = document.querySelector('.tab-pane.active');
+                history.pushState({ type: 'tab', tabId: activePane ? activePane.id : 'tab-tasks' }, '', '#' + (activePane ? activePane.id : 'tab-tasks'));
+                isHandlingPopState = false;
+                return;
+            }
+
+            // 4. إذا كان المندوب في أي صفحة فرعية، أرجعه فوراً لصفحة (خط السير ومهام التوصيل)
+            const currentActiveTab = document.querySelector('.tab-pane.active');
+            if (currentActiveTab && currentActiveTab.id !== 'tab-tasks') {
+                switchTab('tab-tasks', document.getElementById('nav-btn-tasks'), true);
+                history.pushState({ type: 'tab', tabId: 'tab-tasks' }, '', '#tab-tasks');
+                isHandlingPopState = false;
+                return;
+            }
+
+            isHandlingPopState = false;
+        });
 
         document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeCameraScannerModal(); document.querySelectorAll('.modal-backdrop').forEach(m => { m.classList.add('hidden'); m.classList.remove('flex'); }); } });
 
         window.addEventListener('DOMContentLoaded', () => {
+            history.replaceState({ type: 'home', tabId: 'tab-tasks' }, '', '#tab-tasks');
+            history.pushState({ type: 'tab', tabId: 'tab-tasks' }, '', '#tab-tasks');
+
             injectAllModals();
             renderAll();
             pullAllFromGoogleSheets();
