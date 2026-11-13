@@ -97,6 +97,7 @@
 
     <div id="mobile-sidebar-backdrop" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-slate-900/60 z-50 hidden lg:hidden"></div>
 
+    <!-- ================= 1. الهيدر العلوي ================= -->
     <header class="bg-white border-b border-slate-200 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 flex-shrink-0 z-30 shadow-sm">
         <div class="flex items-center gap-2">
             <button onclick="toggleMobileSidebar(true)" class="lg:hidden px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm">
@@ -144,6 +145,7 @@
         </div>
     </header>
 
+    <!-- ================= 2. منطقة العمل الرئيسية ================= -->
     <div class="flex flex-1 overflow-hidden relative">
 
         <aside id="main-sidebar" class="sidebar-custom sidebar-full text-slate-300 flex flex-col justify-between flex-shrink-0 h-full select-none shadow-2xl">
@@ -543,10 +545,10 @@
 
     <!-- شريط التنقل السفلي للموبايل -->
     <nav class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 px-2 py-1.5 flex items-center justify-around z-40 shadow-2xl text-[10px] font-extrabold text-slate-600">
-        <button onclick="switchTab('tab-overview', document.getElementById('nav-btn-overview'))" class="flex flex-col items-center gap-1 py-1 px-2 text-brand"><i class="fa-solid fa-chart-pie text-base"></i><span>الرئيسية</span></button>
-        <button onclick="switchTab('tab-orders', document.getElementById('nav-btn-orders'))" class="flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-boxes-stacked text-base text-amber-500"></i><span>الشحنات</span></button>
+        <button id="mob-nav-overview" onclick="switchTab('tab-overview', document.getElementById('nav-btn-overview'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2 text-brand"><i class="fa-solid fa-chart-pie text-base"></i><span>الرئيسية</span></button>
+        <button id="mob-nav-orders" onclick="switchTab('tab-orders', document.getElementById('nav-btn-orders'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-boxes-stacked text-base text-amber-500"></i><span>الشحنات</span></button>
         <button onclick="openCameraScannerModal()" class="flex flex-col items-center justify-center -mt-5 w-12 h-12 rounded-2xl bg-slate-900 text-amber-400 shadow-lg border-2 border-white"><i class="fa-solid fa-camera text-lg"></i></button>
-        <button onclick="switchTab('tab-merchants', document.getElementById('nav-btn-merchants'))" class="flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-store text-base text-purple-600"></i><span>التجار</span></button>
+        <button id="mob-nav-merchants" onclick="switchTab('tab-merchants', document.getElementById('nav-btn-merchants'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-store text-base text-purple-600"></i><span>التجار</span></button>
         <button onclick="toggleMobileSidebar(true)" class="flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-bars text-base text-slate-800"></i><span>القائمة</span></button>
     </nav>
 
@@ -554,8 +556,8 @@
     <div id="modals-container"></div>
     <div id="print-mount-root"></div>
 
+    <!-- ================= المحرك البرمجي الشامل للوحة الإدارة (مع زر الرجوع الذكي للموبايل) ================= -->
     <script>
-        // الروابط السحابية الصحيحة والكاملة للشيتات الثلاثة
         const PRIME_CLOUD_URLS = {
             CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzDQzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
             OPS_DB:  "https://script.google.com/macros/s/AKfycbxsbu4BzuCSZ1EYyB54V9qx5g0VQojS6_cyeW-4gnldVEbKQdAXIsKSWK33hQqfEfyN/exec",
@@ -619,7 +621,6 @@
             { code: 'ZN-06', name: 'محافظات الصعيد', sector: 'شمال ووسط الصعيد', fee: 85, comm: 30, remoteFee: 25, extraKg: 15, sla: '48 إلى 72 ساعة' }
         ];
 
-        // مطابقة للبيانات الفعلية المسجلة في شيت Core_DB_1
         const merchantsData = [
             { code: 'MER-101', store: 'Piu Poin', owner: 'احمد ناصر', phone: '201126389850', user: 'piupoin', pass: '444888', discount: 0, shopify: true, egateway: true }
         ];
@@ -731,6 +732,14 @@
                 .toLowerCase();
         }
 
+        function isSameMerchantStore(orderMerchant, merchantStore) {
+            const a = String(orderMerchant || '').trim().toLowerCase();
+            const b = String(merchantStore || '').trim().toLowerCase();
+            if (a === b) return true;
+            if ((a === 'بيبون ستور' || a === 'piu poin') && (b === 'بيبون ستور' || b === 'piu poin')) return true;
+            return false;
+        }
+
         function syncWarehouseStockForOrder(order, newStatus) {
             const shipStates = ['جاهز للشحن', 'تم الشحن مع المندوب', 'تم التسليم', 'تم التسليم جزئي'];
             const returnStates = ['مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن', 'تم الإلغاء'];
@@ -742,7 +751,7 @@
             for (const [baseProd, qty] of Object.entries(analysis.baseGroups)) {
                 const normBase = normalizeArabicForMatch(baseProd);
                 const stockItem = warehouseData.find(w => {
-                    if (w.merchant !== order.merchant) return false;
+                    if (!isSameMerchantStore(w.merchant, order.merchant)) return false;
                     const normW = normalizeArabicForMatch(w.name);
                     return normBase.includes(normW) || normW.includes(normBase);
                 });
@@ -1489,14 +1498,6 @@
             if (!skipPush) { renderAll(); pushToOpsDB(); }
         }
 
-        function isSameMerchantStore(orderMerchant, merchantStore) {
-            const a = String(orderMerchant || '').trim().toLowerCase();
-            const b = String(merchantStore || '').trim().toLowerCase();
-            if (a === b) return true;
-            if ((a === 'بيبون ستور' || a === 'piu poin') && (b === 'بيبون ستور' || b === 'piu poin')) return true;
-            return false;
-        }
-
         function calcMerchantBalance(storeName) {
             return ordersData.filter(o => isSameMerchantStore(o.merchant, storeName) && !o.settledMerchant && ['تم التسليم', 'تم التسليم جزئي', 'مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن'].includes(o.status)).reduce((sum, o) => sum + calcOrderFinancials(o).netMerchant, 0);
         }
@@ -1876,8 +1877,7 @@
         }
 
         function setSidebarMode(mode) { const sb = document.getElementById('main-sidebar'); sb.classList.remove('sidebar-full', 'sidebar-mini', 'sidebar-closed'); sb.classList.add('sidebar-' + mode); }
-        function toggleMobileSidebar(open) { const sb = document.getElementById('main-sidebar'), bd = document.getElementById('mobile-sidebar-backdrop'); if (open) { sb.classList.add('mobile-open'); bd.classList.remove('hidden'); } else { sb.classList.remove('mobile-open'); bd.classList.add('hidden'); } }
-        function switchTab(tabId, clickedBtn) { document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active'); if (clickedBtn) { document.querySelectorAll('#main-sidebar .nav-btn').forEach(btn => btn.classList.remove('bg-brand', 'text-white')); clickedBtn.classList.add('bg-brand', 'text-white'); } toggleMobileSidebar(false); }
+
         function updateBrandName(val) {
             const clean = val || 'برايم';
             localStorage.setItem('prime_company_name', clean);
@@ -1896,13 +1896,130 @@
         }
         function copyWebhookUrl() { navigator.clipboard.writeText(document.getElementById('generated-webhook-url').innerText); alert('تم نسخ رابط الربط الفعلي!'); }
         function executeQuickScan() { const code = document.getElementById('quick-scan-input').value.trim(), action = document.getElementById('quick-scan-action').value; if (!code) return alert('اكتب رقم البوليصة أولاً'); const idx = ordersData.findIndex(o => String(o.awb).toLowerCase() === code.replace('#','').toLowerCase()); if (idx > -1) { changeOrderStatus(idx, action); alert(`تم تحديث #${ordersData[idx].awb} إلى (${action})`); } else alert(`لا توجد بوليصة بهذا الرقم #${code}`); document.getElementById('quick-scan-input').value = ''; }
-        function openModal(id) { document.getElementById(id)?.classList.remove('hidden'); document.getElementById(id)?.classList.add('flex'); }
-        function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); document.getElementById(id)?.classList.remove('flex'); }
-        function handleBackdropClick(event, modalId) { if (event.target.id === modalId) { if (modalId === 'modal-camera-scanner') closeCameraScannerModal(); else closeModal(modalId); } }
+
+        // =========================================================================
+        // محرك زر الرجوع الذكي للموبايل (History API Router)
+        // =========================================================================
+        let isHandlingPopState = false;
+
+        function toggleMobileSidebar(open, skipHistory = false) {
+            const sb = document.getElementById('main-sidebar');
+            const bd = document.getElementById('mobile-sidebar-backdrop');
+            if (open) {
+                sb.classList.add('mobile-open');
+                bd.classList.remove('hidden');
+                if (!skipHistory && !isHandlingPopState) {
+                    history.pushState({ type: 'sidebar' }, '', '#sidebar');
+                }
+            } else {
+                sb.classList.remove('mobile-open');
+                bd.classList.add('hidden');
+            }
+        }
+
+        function switchTab(tabId, clickedBtn, skipHistory = false) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(tabId);
+            if (target) target.classList.add('active');
+
+            const targetSideBtn = clickedBtn || document.getElementById('nav-btn-' + tabId.replace('tab-', ''));
+            if (targetSideBtn) {
+                document.querySelectorAll('#main-sidebar .nav-btn').forEach(btn => btn.classList.remove('bg-brand', 'text-white'));
+                targetSideBtn.classList.add('bg-brand', 'text-white');
+            }
+
+            // تحديث تمييز شريط الموبايل السفلي
+            document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('text-brand'));
+            const mobBtn = document.getElementById('mob-nav-' + tabId.replace('tab-', ''));
+            if (mobBtn) mobBtn.classList.add('text-brand');
+
+            toggleMobileSidebar(false, true);
+
+            if (!skipHistory && !isHandlingPopState) {
+                history.pushState({ type: 'tab', tabId: tabId }, '', '#' + tabId);
+            }
+        }
+
+        function openModal(id) {
+            const m = document.getElementById(id);
+            if (!m) return;
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            if (!isHandlingPopState) {
+                history.pushState({ type: 'modal', modalId: id }, '', '#' + id);
+            }
+        }
+
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            if (!m) return;
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function handleBackdropClick(event, modalId) {
+            if (event.target.id === modalId) {
+                if (modalId === 'modal-camera-scanner') closeCameraScannerModal();
+                else closeModal(modalId);
+            }
+        }
+
+        // اعتراض زر الرجوع في التليفون (Back Button)
+        window.addEventListener('popstate', async () => {
+            isHandlingPopState = true;
+
+            // 1. إذا كانت نافذة الكاميرا مفتوحة، أوقف الكاميرا وأغلق النافذة
+            const camModal = document.getElementById('modal-camera-scanner');
+            if (camModal && !camModal.classList.contains('hidden')) {
+                await closeCameraScannerModal();
+                const activePane = document.querySelector('.tab-pane.active');
+                history.pushState({ type: 'tab', tabId: activePane ? activePane.id : 'tab-overview' }, '', '#' + (activePane ? activePane.id : 'tab-overview'));
+                isHandlingPopState = false;
+                return;
+            }
+
+            // 2. إذا كانت هناك أي نافذة منبثقة أخرى مفتوحة، أغلقها فقط وابقَ في نفس الصفحة
+            const openModals = Array.from(document.querySelectorAll('.modal-backdrop')).filter(m => !m.classList.contains('hidden'));
+            if (openModals.length > 0) {
+                openModals.forEach(m => {
+                    m.classList.add('hidden');
+                    m.classList.remove('flex');
+                });
+                const activePane = document.querySelector('.tab-pane.active');
+                history.pushState({ type: 'tab', tabId: activePane ? activePane.id : 'tab-overview' }, '', '#' + (activePane ? activePane.id : 'tab-overview'));
+                isHandlingPopState = false;
+                return;
+            }
+
+            // 3. إذا كانت القائمة الجانبية للموبايل مفتوحة، أغلقها فقط
+            const sb = document.getElementById('main-sidebar');
+            if (sb && sb.classList.contains('mobile-open')) {
+                toggleMobileSidebar(false, true);
+                const activePane = document.querySelector('.tab-pane.active');
+                history.pushState({ type: 'tab', tabId: activePane ? activePane.id : 'tab-overview' }, '', '#' + (activePane ? activePane.id : 'tab-overview'));
+                isHandlingPopState = false;
+                return;
+            }
+
+            // 4. إذا كان الأدمن في أي صفحة فرعية، أرجعه فوراً للصفحة الأساسية (مركز القيادة والماليات)
+            const currentActiveTab = document.querySelector('.tab-pane.active');
+            if (currentActiveTab && currentActiveTab.id !== 'tab-overview') {
+                switchTab('tab-overview', document.getElementById('nav-btn-overview'), true);
+                history.pushState({ type: 'tab', tabId: 'tab-overview' }, '', '#tab-overview');
+                isHandlingPopState = false;
+                return;
+            }
+
+            isHandlingPopState = false;
+        });
 
         document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeCameraScannerModal(); document.querySelectorAll('.modal-backdrop').forEach(m => { m.classList.add('hidden'); m.classList.remove('flex'); }); } });
 
         window.addEventListener('DOMContentLoaded', () => {
+            // تثبيت الصفحة الأساسية كمرجع أول في سجل التصفح للموبايل
+            history.replaceState({ type: 'home', tabId: 'tab-overview' }, '', '#tab-overview');
+            history.pushState({ type: 'tab', tabId: 'tab-overview' }, '', '#tab-overview');
+
             injectAllModals();
             renderAll();
             pullAllFromGoogleSheets();
