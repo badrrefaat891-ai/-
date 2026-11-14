@@ -118,6 +118,9 @@
                 <span class="w-5 h-5 rounded-lg bg-white/95 flex items-center justify-center p-0.5 flex-shrink-0" id="header-egw-logo-slot"></span>
                 <span>مزامنة E-Gateway</span>
             </button>
+            <button onclick="openPartnerModal()" class="px-2.5 sm:px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-handshake text-amber-300"></i><span class="hidden sm:inline">+ شريك</span>
+            </button>
             <button onclick="openMerchantModal()" class="px-2.5 sm:px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition">
                 <i class="fa-solid fa-user-plus text-amber-400"></i><span class="hidden sm:inline">+ تاجر</span>
             </button>
@@ -172,6 +175,7 @@
                     <button onclick="switchTab('tab-orders', this)" id="nav-btn-orders" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition"><div class="flex items-center gap-3"><i class="fa-solid fa-boxes-stacked text-sm w-5 text-center text-amber-400"></i><span class="nav-label">إدارة الشحنات والتوزيع</span></div><span id="badge-orders" class="badge-count px-2 py-0.5 text-[10px] rounded-full bg-white/15 text-white">0</span></button>
                     <button onclick="switchTab('tab-merchants', this)" id="nav-btn-merchants" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition"><div class="flex items-center gap-3"><i class="fa-solid fa-store text-sm w-5 text-center text-purple-400"></i><span class="nav-label">صفحة التجار والشيتات</span></div><span id="badge-merchants" class="badge-count px-2 py-0.5 text-[10px] rounded-full bg-purple-500/20 text-purple-300">0</span></button>
                     <button onclick="switchTab('tab-couriers', this)" id="nav-btn-couriers" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition"><div class="flex items-center gap-3"><i class="fa-solid fa-motorcycle text-sm w-5 text-center text-cyan-400"></i><span class="nav-label">المناديب وتقفيل العهدة</span></div><span id="badge-couriers" class="badge-count px-2 py-0.5 text-[10px] rounded-full bg-cyan-500/20 text-cyan-300">0</span></button>
+                    <button onclick="switchTab('tab-partners', this)" id="nav-btn-partners" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition"><div class="flex items-center gap-3"><i class="fa-solid fa-handshake text-sm w-5 text-center text-indigo-400"></i><span class="nav-label">صفحة الشركاء ونسب الأرباح</span></div><span id="badge-partners" class="badge-count px-2 py-0.5 text-[10px] rounded-full bg-indigo-500/20 text-indigo-300">0</span></button>
                     <button onclick="switchTab('tab-warehouse', this)" id="nav-btn-warehouse" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition"><div class="flex items-center gap-3"><i class="fa-solid fa-warehouse text-sm w-5 text-center text-orange-400"></i><span class="nav-label">المخزن الذكي والتغليف</span></div><span id="badge-warehouse" class="badge-count px-2 py-0.5 text-[10px] rounded-full bg-orange-500/20 text-orange-300">0</span></button>
                     <button onclick="switchTab('tab-treasury', this)" id="nav-btn-treasury" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition"><div class="flex items-center gap-3"><i class="fa-solid fa-vault text-sm w-5 text-center text-emerald-400"></i><span class="nav-label">الخزنة والمصروفات والأرباح</span></div><span class="badge-count px-2 py-0.5 text-[10px] rounded-full bg-emerald-500/20 text-emerald-300">الماليات</span></button>
                     <button onclick="switchTab('tab-ndr', this)" id="nav-btn-ndr" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition"><div class="flex items-center gap-3"><i class="fa-solid fa-triangle-exclamation text-sm w-5 text-center text-rose-400"></i><span class="nav-label">غرفة مشاكل التوصيل (NDR)</span></div><span id="badge-ndr" class="badge-count px-2 py-0.5 text-[10px] rounded-full bg-rose-500/30 text-rose-300">0</span></button>
@@ -211,10 +215,11 @@
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 class="text-lg sm:text-xl font-black text-slate-900">مركز القيادة والتحكم المالي — <span class="brand-name-span text-brand">برايم</span> 👋</h1>
-                        <p class="text-xs text-slate-500 mt-1">متابعة سحابية لحظية لجميع التجار، عهدة المناديب، المخزن الذكي، وأوردرات المتاجر المربوطة بـ E-Gateway</p>
+                        <p class="text-xs text-slate-500 mt-1">متابعة سحابية لحظية لجميع التجار، الشركاء، عهدة المناديب، المخزن الذكي، وأوردرات المتاجر</p>
                     </div>
                     <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-                        <button onclick="syncLiveOrdersFromStores()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 egateway-grad text-white rounded-xl text-xs font-black shadow flex items-center gap-1.5"><i class="fa-solid fa-rotate text-amber-300"></i> مزامنة أوردرات المتاجر الآن</button>
+                        <button onclick="syncLiveOrdersFromStores()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 egateway-grad text-white rounded-xl text-xs font-black shadow flex items-center gap-1.5"><i class="fa-solid fa-rotate text-amber-300"></i> مزامنة أوردرات المتاجر</button>
+                        <button onclick="openPartnerModal()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5"><i class="fa-solid fa-handshake"></i> + أكونت شريك</button>
                         <button onclick="openMerchantModal()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5"><i class="fa-solid fa-store"></i> + تاجر جديد</button>
                         <button onclick="openCourierModal()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 bg-cyan-600 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5"><i class="fa-solid fa-motorcycle"></i> + أكونت مندوب</button>
                     </div>
@@ -230,8 +235,8 @@
                         <div class="mt-3 text-[11px] text-amber-700 font-bold flex justify-between"><span>صافي بعد خصم الشحن</span><button onclick="switchTab('tab-merchants', document.getElementById('nav-btn-merchants'))" class="underline">فواتير التجار &larr;</button></div>
                     </div>
                     <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <div class="flex justify-between items-start"><div><span class="text-xs font-bold text-slate-400">صافي الربح الحالي (قابل للسحب)</span><h3 id="kpi-company-profit" class="text-xl sm:text-2xl font-black text-emerald-600 mt-1">0 ج.م</h3></div><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg"><i class="fa-solid fa-vault"></i></div></div>
-                        <div class="mt-3 text-[11px] text-emerald-600 font-bold flex justify-between"><span>بعد العمولات والمصروفات</span><button onclick="switchTab('tab-treasury', document.getElementById('nav-btn-treasury'))" class="underline">الخزنة &larr;</button></div>
+                        <div class="flex justify-between items-start"><div><span class="text-xs font-bold text-slate-400">صافي الربح الحالي (قابل للتوزيع)</span><h3 id="kpi-company-profit" class="text-xl sm:text-2xl font-black text-emerald-600 mt-1">0 ج.م</h3></div><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg"><i class="fa-solid fa-vault"></i></div></div>
+                        <div class="mt-3 text-[11px] text-emerald-600 font-bold flex justify-between"><span>يوزع حسب نسب الشركاء</span><button onclick="switchTab('tab-partners', document.getElementById('nav-btn-partners'))" class="underline">حصص الشركاء &larr;</button></div>
                     </div>
                     <div class="bg-white p-4 sm:p-5 rounded-2xl border-2 border-cyan-500/40 shadow-sm">
                         <div class="flex justify-between items-start">
@@ -357,6 +362,85 @@
                     <button onclick="openCourierModal()" class="px-4 py-2.5 bg-cyan-600 text-white rounded-xl text-xs font-bold shadow">+ إنشاء أكونت مندوب</button>
                 </div>
                 <div id="couriers-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs"></div>
+            </div>
+
+            <!-- ================= الصفحة الجديدة: صفحة الشركاء ونسب الأرباح (من 100%) ================= -->
+            <div id="tab-partners" class="tab-pane space-y-5">
+                <div class="bg-gradient-to-l from-indigo-950 via-slate-900 to-blue-950 text-white p-5 rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <span class="px-3 py-0.5 rounded-full bg-indigo-500/30 text-indigo-200 font-black text-[11px] border border-indigo-400/30">إدارة الشركاء وتوزيع الأرباح الذكي (100%)</span>
+                        <h2 class="text-lg sm:text-xl font-black mt-1"><i class="fa-solid fa-handshake text-amber-400 ml-1"></i> صفحة الشركاء، الحسابات، وحصص الأرباح</h2>
+                        <p class="text-xs text-slate-300 mt-1">أنشئ أكونت لكل شريك وحدد نسبته المئوية من الأرباح (مثلاً 30%، 20%، 10%)، وسيحسب النظام نصيب كل شريك من صافي الربح تلقائياً</p>
+                    </div>
+                    <button onclick="openPartnerModal()" class="px-5 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs shadow-lg flex items-center gap-2 transition">
+                        <i class="fa-solid fa-user-plus"></i> + إنشاء أكونت شريك جديد
+                    </button>
+                </div>
+
+                <!-- كروت ملخص الشركاء ونسب الـ 100% -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-slate-400 font-bold block">عدد الشركاء المسجلين</span>
+                        <strong id="prt-kpi-count" class="text-2xl font-black text-slate-900 mt-1.5 block">0 شريك</strong>
+                        <span class="text-[11px] text-indigo-600 font-bold mt-2 block">لهم أكونتات فعالة بالنظام</span>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border-2 border-indigo-500/40 shadow-sm">
+                        <span class="text-indigo-800 font-extrabold block">مجموع نسب الشركاء (من 100%)</span>
+                        <strong id="prt-kpi-total-pct" class="text-2xl font-black text-indigo-600 mt-1.5 block">0%</strong>
+                        <span id="prt-kpi-rem-pct" class="text-[11px] text-emerald-700 font-bold mt-2 block">حصة الشركة/المالك المتبقية: 100%</span>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-slate-400 font-bold block">إجمالي أرباح الشركاء الحالية</span>
+                        <strong id="prt-kpi-dues" class="text-2xl font-black text-emerald-600 mt-1.5 block">0 ج.م</strong>
+                        <span class="text-[11px] text-slate-500 font-bold mt-2 block">محسوبة من صافي الربح الحالي</span>
+                    </div>
+
+                    <div class="bg-slate-900 text-white p-5 rounded-2xl shadow-sm">
+                        <span class="text-amber-400 font-extrabold block">صافي حصة المالك الأساسي بعد الشركاء</span>
+                        <strong id="prt-kpi-owner-net" class="text-2xl font-black text-white mt-1.5 block">0 ج.م</strong>
+                        <span class="text-[11px] text-slate-300 font-bold mt-2 block">الصافي المتبقي للإدارة</span>
+                    </div>
+                </div>
+
+                <!-- شريط توزيع النسب المئوية البصري (100% Progress Bar) -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2 text-xs">
+                    <div class="flex justify-between items-center font-bold">
+                        <span>مؤشر توزيع حصص الأرباح (إجمالي 100%):</span>
+                        <span id="prt-bar-label" class="text-indigo-700 font-black">0% موزعة للشركاء | 100% للمالك الأساسي</span>
+                    </div>
+                    <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border flex">
+                        <div id="prt-bar-fill" class="h-full bg-gradient-to-l from-indigo-600 to-cyan-500 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- جدول الشركاء وحساباتهم ونسبهم -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="font-extrabold text-sm text-slate-900">جدول حسابات الشركاء ونسب الأرباح</h3>
+                            <p class="text-[11px] text-slate-500">يمكنك تعديل نسبة أي شريك أو بيانات دخوله في أي وقت، أو صرف نصيبه من الأرباح</p>
+                        </div>
+                        <button onclick="openPartnerModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow">+ إضافة شريك</button>
+                    </div>
+                    <div class="table-responsive-scroll">
+                        <table class="w-full text-right text-xs whitespace-nowrap">
+                            <thead class="bg-slate-50 text-slate-600 font-bold border-b">
+                                <tr>
+                                    <th class="p-3.5">كود الشريك</th>
+                                    <th class="p-3.5">اسم الشريك والمسمى</th>
+                                    <th class="p-3.5">بيانات الدخول (Account) والهاتف</th>
+                                    <th class="p-3.5">نسبة الشراكة (%)</th>
+                                    <th class="p-3.5">نصيبه من الربح الحالي</th>
+                                    <th class="p-3.5">إجمالي ما استلمه سابقاً</th>
+                                    <th class="p-3.5 text-center">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="partners-tbody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- الصفحة 5: المخزن الذكي -->
@@ -548,15 +632,14 @@
         <button id="mob-nav-overview" onclick="switchTab('tab-overview', document.getElementById('nav-btn-overview'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2 text-brand"><i class="fa-solid fa-chart-pie text-base"></i><span>الرئيسية</span></button>
         <button id="mob-nav-orders" onclick="switchTab('tab-orders', document.getElementById('nav-btn-orders'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-boxes-stacked text-base text-amber-500"></i><span>الشحنات</span></button>
         <button onclick="openCameraScannerModal()" class="flex flex-col items-center justify-center -mt-5 w-12 h-12 rounded-2xl bg-slate-900 text-amber-400 shadow-lg border-2 border-white"><i class="fa-solid fa-camera text-lg"></i></button>
-        <button id="mob-nav-merchants" onclick="switchTab('tab-merchants', document.getElementById('nav-btn-merchants'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-store text-base text-purple-600"></i><span>التجار</span></button>
+        <button id="mob-nav-partners" onclick="switchTab('tab-partners', document.getElementById('nav-btn-partners'))" class="mob-nav-btn flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-handshake text-base text-indigo-600"></i><span>الشركاء</span></button>
         <button onclick="toggleMobileSidebar(true)" class="flex flex-col items-center gap-1 py-1 px-2"><i class="fa-solid fa-bars text-base text-slate-800"></i><span>القائمة</span></button>
     </nav>
 
     <!-- حاوية النوافذ المنبثقة -->
     <div id="modals-container"></div>
     <div id="print-mount-root"></div>
-
-    <!-- ================= المحرك البرمجي الشامل للوحة الإدارة (مع زر الرجوع الذكي للموبايل) ================= -->
+    <!-- ================= المحرك البرمجي الشامل للوحة الإدارة + نظام الشركاء ونسب الـ 100% ================= -->
     <script>
         const PRIME_CLOUD_URLS = {
             CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzDQzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
@@ -628,6 +711,9 @@
         const couriersData = [
             { id: 'CR-01', name: 'أحمد المندوب', phone: '01011112222', user: 'ahmed_cr', pass: '123456', zone: 'المعادي وحلوان', comm: 20 }
         ];
+
+        // مصفوفة الشركاء ونسب الأرباح (تُحفظ محلياً وسحابياً)
+        let partnersData = JSON.parse(localStorage.getItem('prime_partners_data') || '[]');
 
         const warehouseData = [];
         const ordersData = [];
@@ -862,6 +948,20 @@
                         }));
                         if (cleanCour.length > 0) couriersData.splice(0, couriersData.length, ...cleanCour);
                     }
+                    if (Array.isArray(coreRes.partners) && coreRes.partners.length > 0) {
+                        partnersData = coreRes.partners.filter(p => p.name).map(p => ({
+                            ...p,
+                            id: String(p.id || 'PRT-01').trim(),
+                            name: String(p.name || '').trim(),
+                            roleTitle: String(p.roleTitle || 'شريك مؤسس').trim(),
+                            phone: String(p.phone || '').trim(),
+                            user: String(p.user || '').trim(),
+                            pass: String(p.pass !== undefined && p.pass !== '' ? p.pass : '123456').trim(),
+                            percent: parseFloat(p.percent) || 0,
+                            paidTotal: parseFloat(p.paidTotal) || 0
+                        }));
+                        localStorage.setItem('prime_partners_data', JSON.stringify(partnersData));
+                    }
                     if (Array.isArray(coreRes.zones) && coreRes.zones.length > 0) {
                         const cleanZones = coreRes.zones.filter(z => z.name).map(z => ({ ...z, fee: parseFloat(z.fee) || 50, comm: parseFloat(z.comm) || 20, remoteFee: parseFloat(z.remoteFee) || 15, extraKg: parseFloat(z.extraKg) || 10 }));
                         if (cleanZones.length > 0) zonesData.splice(0, zonesData.length, ...cleanZones);
@@ -923,17 +1023,25 @@
         }
 
         async function pushToCoreDB() {
+            localStorage.setItem('prime_partners_data', JSON.stringify(partnersData));
             if (!isInitialCloudLoaded) return;
             setSyncStatus('saving', '⏳ جاري الحفظ الفعلي في جوجل شيت (Core_DB)...');
             try {
                 const res = await fetch(PRIME_CLOUD_URLS.CORE_DB, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'SYNC_ALL_CORE', merchants: merchantsData, couriers: couriersData, zones: zonesData, warehouse: warehouseData })
+                    body: JSON.stringify({
+                        action: 'SYNC_ALL_CORE',
+                        merchants: merchantsData,
+                        couriers: couriersData,
+                        partners: partnersData,
+                        zones: zonesData,
+                        warehouse: warehouseData
+                    })
                 });
                 const result = await res.json();
                 if (!result || result.status !== 'success') throw new Error(result?.message || 'رفض الشيت عملية الحفظ');
-                setSyncStatus('ok', `✅ تم الحفظ الفعلي في الشيت الأول (${merchantsData.length} تاجر) ✓`);
+                setSyncStatus('ok', `✅ تم الحفظ الفعلي في الشيت الأول ✓`);
             } catch (e) {
                 setSyncStatus('error', '❌ فشل الحفظ في الشيت الأول!');
             }
@@ -1059,7 +1167,6 @@
                 </div>
             </div>
 
-            <!-- نافذة تفاصيل المنتج وفصل الصنف الأساسي للمخزن -->
             <div id="modal-product-notes" onclick="handleBackdropClick(event, 'modal-product-notes')" class="modal-backdrop fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-3 sm:p-4 z-50">
                 <div class="modal-card bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden text-xs">
                     <div class="p-4 border-b flex justify-between items-center bg-slate-50">
@@ -1153,6 +1260,53 @@
                         </div>
                     </div>
                     <div class="p-4 border-t bg-slate-50 flex justify-between items-center"><button onclick="closeCameraScannerModal()" class="px-4 py-2.5 rounded-xl bg-slate-200 font-bold">إلغاء وخروج</button><button onclick="saveCameraBatch()" class="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-black shadow">حفظ وتطبيق على الكل</button></div>
+                </div>
+            </div>
+
+            <!-- نافذة إنشاء / تعديل حساب الشريك ونسبته من 100% -->
+            <div id="modal-partner" onclick="handleBackdropClick(event, 'modal-partner')" class="modal-backdrop fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-3 sm:p-4 z-50">
+                <div class="modal-card bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden text-xs">
+                    <div class="p-4 border-b bg-indigo-950 text-white flex justify-between items-center">
+                        <h3 id="modal-prt-title" class="font-extrabold text-sm sm:text-base"><i class="fa-solid fa-handshake text-amber-400 ml-1"></i> إنشاء / تعديل أكونت شريك ونسبة الأرباح</h3>
+                        <button onclick="closeModal('modal-partner')" class="w-8 h-8 rounded-xl bg-white/10 text-white flex items-center justify-center font-bold"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <input type="hidden" id="prt-edit-idx" value="-1">
+                    <div class="modal-body-scroll p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="font-bold text-slate-700 block mb-1">اسم الشريك بالكامل *</label>
+                            <input id="prt-name" type="text" placeholder="مثال: محمد علي" class="w-full p-2.5 border rounded-xl font-bold">
+                        </div>
+                        <div>
+                            <label class="font-bold text-slate-700 block mb-1">المسمى / الصفة</label>
+                            <input id="prt-role" type="text" value="شريك بنسبة في الأرباح" class="w-full p-2.5 border rounded-xl">
+                        </div>
+                        <div>
+                            <label class="font-bold text-slate-700 block mb-1">رقم الموبايل / واتساب *</label>
+                            <input id="prt-phone" type="text" placeholder="01xxxxxxxxx" class="w-full p-2.5 border rounded-xl font-mono">
+                        </div>
+                        <div class="bg-indigo-50 p-2.5 rounded-xl border border-indigo-200">
+                            <label class="font-black text-indigo-900 block mb-1">نسبة الشريك من الأرباح (%) *</label>
+                            <div class="flex items-center gap-1.5">
+                                <input id="prt-percent" type="number" min="1" max="100" step="0.5" value="20" class="w-full p-2 border border-indigo-300 rounded-lg font-black text-indigo-700 text-center text-sm bg-white">
+                                <span class="font-black text-indigo-900 text-sm">%</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="font-bold text-slate-700 block mb-1">اسم المستخدم للدخول (Account) *</label>
+                            <input id="prt-user" type="text" placeholder="partner1" class="w-full p-2.5 border rounded-xl font-mono">
+                        </div>
+                        <div>
+                            <label class="font-bold text-slate-700 block mb-1">كلمة المرور (Password) *</label>
+                            <input id="prt-pass" type="text" value="123456" class="w-full p-2.5 border rounded-xl font-mono">
+                        </div>
+                        <div class="sm:col-span-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 font-bold">
+                            💡 مجموع النسب الكلي للشركة هو <strong>100%</strong>. możesz تحديد 10% أو 20% أو 30% للشريك، والنسبة المتبقية تكون لصاحب الشركة الأساسي تلقائياً.
+                        </div>
+                    </div>
+                    <div class="p-4 border-t bg-slate-50 flex justify-end gap-2">
+                        <button onclick="closeModal('modal-partner')" class="px-4 py-2 rounded-xl bg-slate-200 font-bold">إلغاء</button>
+                        <button onclick="savePartnerModal()" class="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow">حفظ أكونت الشريك ونسبته</button>
+                    </div>
                 </div>
             </div>
 
@@ -1281,6 +1435,176 @@
             order.historyLog.unshift({ action: actionLabel, time: nowStr });
         }
 
+        function getCurrentNetProfitValue() {
+            let earnedProfitFromOrders = 0;
+            ordersData.forEach(o => {
+                const fin = calcOrderFinancials(o);
+                if (['تم التسليم', 'تم التسليم جزئي', 'مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن'].includes(o.status)) {
+                    earnedProfitFromOrders += fin.companyNet;
+                }
+            });
+            const totalExpenses = expensesData.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+            return Math.max(0, earnedProfitFromOrders - totalExpenses);
+        }
+
+        // =========================================================================
+        // دوال إدارة الشركاء وحساب النسب من 100% (Partners Management)
+        // =========================================================================
+        function renderPartners() {
+            const currentNetProfit = getCurrentNetProfitValue();
+            const totalPartnersPct = partnersData.reduce((s, p) => s + (parseFloat(p.percent) || 0), 0);
+            const ownerRemPct = Math.max(0, 100 - totalPartnersPct);
+            const totalPartnersMoney = Math.round((currentNetProfit * totalPartnersPct) / 100);
+            const ownerNetMoney = Math.max(0, currentNetProfit - totalPartnersMoney);
+
+            if (document.getElementById('badge-partners')) document.getElementById('badge-partners').innerText = partnersData.length;
+            if (document.getElementById('prt-kpi-count')) document.getElementById('prt-kpi-count').innerText = partnersData.length + ' شريك';
+            if (document.getElementById('prt-kpi-total-pct')) document.getElementById('prt-kpi-total-pct').innerText = totalPartnersPct + '%';
+            if (document.getElementById('prt-kpi-rem-pct')) document.getElementById('prt-kpi-rem-pct').innerText = `حصة الشركة / المالك المتبقية: ${ownerRemPct}%`;
+            if (document.getElementById('prt-kpi-dues')) document.getElementById('prt-kpi-dues').innerText = totalPartnersMoney.toLocaleString() + ' ج.م';
+            if (document.getElementById('prt-kpi-owner-net')) document.getElementById('prt-kpi-owner-net').innerText = ownerNetMoney.toLocaleString() + ' ج.م';
+
+            if (document.getElementById('prt-bar-label')) {
+                document.getElementById('prt-bar-label').innerText = `${totalPartnersPct}% موزعة للشركاء (${partnersData.length}) | ${ownerRemPct}% للمالك الأساسي`;
+            }
+            if (document.getElementById('prt-bar-fill')) {
+                document.getElementById('prt-bar-fill').style.width = Math.min(100, totalPartnersPct) + '%';
+            }
+
+            const tbody = document.getElementById('partners-tbody');
+            if (!tbody) return;
+
+            if (partnersData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 font-bold">لا يوجد شركاء مسجلين حالياً (نسبة المالك الأساسي 100%) — اضغط على "+ إضافة شريك" لتحديد شريك ونسبته</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = partnersData.map((p, idx) => {
+                const partnerShareNow = Math.round((currentNetProfit * (parseFloat(p.percent) || 0)) / 100);
+                return `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3.5 font-mono font-black text-indigo-700">#${p.id}</td>
+                    <td class="p-3.5">
+                        <div class="font-black text-slate-900 text-sm">${p.name}</div>
+                        <div class="text-[11px] text-slate-400 font-bold">${p.roleTitle || 'شريك بالأرباح'}</div>
+                    </td>
+                    <td class="p-3.5">
+                        <div class="font-bold text-slate-800">${p.phone}</div>
+                        <div class="text-[10px] text-slate-400">يوزر: <code>${p.user}</code> | باسورد: <code>${p.pass}</code></div>
+                    </td>
+                    <td class="p-3.5">
+                        <div class="flex items-center gap-1">
+                            <input type="number" min="1" max="100" step="0.5" value="${p.percent}" onchange="updatePartnerPercentInline(${idx}, this.value)" class="w-16 p-1.5 border border-indigo-300 rounded-lg text-center font-black text-indigo-800 bg-indigo-50/50">
+                            <span class="font-black text-indigo-700">%</span>
+                        </div>
+                    </td>
+                    <td class="p-3.5 font-black text-base text-emerald-600">${partnerShareNow.toLocaleString()} ج.م</td>
+                    <td class="p-3.5 font-bold text-blue-700">${(parseFloat(p.paidTotal) || 0).toLocaleString()} ج.م</td>
+                    <td class="p-3.5">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="payoutPartnerShare(${idx})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] shadow-xs">صرف نصيبه الآن</button>
+                            <a href="https://wa.me/2${p.phone}?text=${encodeURIComponent('مرحباً شريكنا العزيز ' + p.name + '، نصيبك الحالي من أرباح الشركة (' + p.percent + '%) هو: ' + partnerShareNow + ' ج.م')}" target="_blank" class="w-7 h-7 bg-emerald-50 text-emerald-700 rounded-lg flex items-center justify-center" title="إرسال كشف واتساب للشريك"><i class="fa-brands fa-whatsapp"></i></a>
+                            <button onclick="openPartnerModal(${idx})" class="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center" title="تعديل الشريك"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deletePartner(${idx})" class="w-7 h-7 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center" title="حذف الشريك"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function openPartnerModal(editIdx = -1) {
+            document.getElementById('prt-edit-idx').value = editIdx;
+            if (editIdx > -1 && partnersData[editIdx]) {
+                const p = partnersData[editIdx];
+                document.getElementById('prt-name').value = p.name;
+                document.getElementById('prt-role').value = p.roleTitle || 'شريك بنسبة في الأرباح';
+                document.getElementById('prt-phone').value = p.phone;
+                document.getElementById('prt-percent').value = p.percent;
+                document.getElementById('prt-user').value = p.user;
+                document.getElementById('prt-pass').value = p.pass;
+            } else {
+                document.getElementById('prt-name').value = '';
+                document.getElementById('prt-role').value = 'شريك بنسبة في الأرباح';
+                document.getElementById('prt-phone').value = '';
+                document.getElementById('prt-percent').value = 20;
+                document.getElementById('prt-user').value = 'partner' + (partnersData.length + 1);
+                document.getElementById('prt-pass').value = '123456';
+            }
+            openModal('modal-partner');
+        }
+
+        function savePartnerModal() {
+            const editIdx = parseInt(document.getElementById('prt-edit-idx').value);
+            const name = String(document.getElementById('prt-name').value || '').trim();
+            const roleTitle = String(document.getElementById('prt-role').value || '').trim() || 'شريك بنسبة في الأرباح';
+            const phone = String(document.getElementById('prt-phone').value || '').trim() || '01000000000';
+            const percent = parseFloat(document.getElementById('prt-percent').value) || 0;
+            const user = String(document.getElementById('prt-user').value || '').trim() || ('partner' + (partnersData.length + 1));
+            const pass = String(document.getElementById('prt-pass').value || '').trim() || '123456';
+
+            if (!name) return alert('يرجى إدخال اسم الشريك');
+            if (percent <= 0 || percent > 100) return alert('يرجى إدخال نسبة شراكة صحيحة بين 1% و 100%');
+
+            const otherPartnersPct = partnersData.reduce((s, p, i) => i === editIdx ? s : s + (parseFloat(p.percent) || 0), 0);
+            if (otherPartnersPct + percent > 100) {
+                return alert(`⚠️ لا يمكن تخطي إجمالي 100%!\nمجموع نسب الشركاء الآخرين حالياً (${otherPartnersPct}%)، الحد الأقصى المتاح لهذا الشريك هو (${100 - otherPartnersPct}%).`);
+            }
+
+            if (editIdx > -1 && partnersData[editIdx]) {
+                Object.assign(partnersData[editIdx], { name, roleTitle, phone, percent, user, pass });
+            } else {
+                partnersData.push({
+                    id: 'PRT-0' + (partnersData.length + 1),
+                    name, roleTitle, phone, percent, user, pass,
+                    paidTotal: 0
+                });
+            }
+
+            renderAll();
+            closeModal('modal-partner');
+            pushToCoreDB();
+        }
+
+        function updatePartnerPercentInline(idx, newVal) {
+            const pct = parseFloat(newVal) || 0;
+            const otherPct = partnersData.reduce((s, p, i) => i === idx ? s : s + (parseFloat(p.percent) || 0), 0);
+            if (pct < 0 || otherPct + pct > 100) {
+                alert(`⚠️ مجموع النسب لا يمكن أن يتجاوز 100% (المتاح كحد أقصى: ${100 - otherPct}%)`);
+                renderPartners();
+                return;
+            }
+            partnersData[idx].percent = pct;
+            renderAll();
+            pushToCoreDB();
+        }
+
+        function payoutPartnerShare(idx) {
+            const p = partnersData[idx];
+            if (!p) return;
+            const currentNetProfit = getCurrentNetProfitValue();
+            const shareAmount = Math.round((currentNetProfit * (parseFloat(p.percent) || 0)) / 100);
+            if (shareAmount <= 0) return alert('لا يوجد صافي ربح حالي قابل للتوزيع الآن (0 ج.م).');
+
+            const confirmAmt = parseFloat(prompt(`نصيب الشريك (${p.name} - بنسبة ${p.percent}%) من الربح الحالي هو (${shareAmount} ج.م).\nاكتب المبلغ المراد صرفه وتسجيله له الآن:`, shareAmount)) || 0;
+            if (confirmAmt <= 0 || confirmAmt > currentNetProfit) return;
+
+            p.paidTotal = (parseFloat(p.paidTotal) || 0) + confirmAmt;
+            expensesData.unshift({ title: `صرف أرباح الشريك: ${p.name} (${p.percent}%)`, category: 'توزيعات أرباح شركاء', amount: confirmAmt, date: getFormattedNow() });
+            withdrawnProfitsTotal += confirmAmt;
+            treasuryLogs.unshift({ text: `توزيع وصرف حصة الشريك (${p.name} - ${p.percent}%)`, amount: confirmAmt, type: 'profit', time: getFormattedNow() });
+
+            renderAll();
+            pushToCoreDB();
+            pushToFinDB();
+        }
+
+        function deletePartner(idx) {
+            if (!confirm(`هل أنت متأكد من حذف حساب الشريك (${partnersData[idx].name})؟`)) return;
+            partnersData.splice(idx, 1);
+            renderAll();
+            pushToCoreDB();
+        }
+
         function renderAll() {
             const savedBrand = localStorage.getItem('prime_company_name') || 'برايم';
             document.getElementById('company-name-display').innerText = savedBrand;
@@ -1288,7 +1612,16 @@
             document.querySelectorAll('.brand-name-span').forEach(e => e.innerText = savedBrand);
 
             refreshEGatewayLogoSlots();
-            populateDropdowns(); renderOrders(); renderMerchants(); renderCouriers(); renderWarehouse(); renderZones(); renderTreasuryAndKPIs(); renderNDR(); renderExpenses();
+            populateDropdowns();
+            renderOrders();
+            renderMerchants();
+            renderCouriers();
+            renderWarehouse();
+            renderZones();
+            renderTreasuryAndKPIs();
+            renderPartners();
+            renderNDR();
+            renderExpenses();
         }
 
         function renderOrders() {
@@ -1721,7 +2054,7 @@
         }
 
         function withdrawNetProfit() {
-            const currentVal = parseFloat(document.getElementById('tr-current-profit').innerText.replace(/,/g, '')) || 0;
+            const currentVal = getCurrentNetProfitValue();
             if (currentVal <= 0) return alert('صافي الربح الحالي القابل للسحب هو 0 ج.م');
             const amount = parseFloat(prompt(`صافي الربح المتاح (${currentVal} ج.م). اكتب المبلغ المراد سحبه:`, currentVal)) || 0;
             if (amount <= 0 || amount > currentVal) return;
@@ -1928,7 +2261,6 @@
                 targetSideBtn.classList.add('bg-brand', 'text-white');
             }
 
-            // تحديث تمييز شريط الموبايل السفلي
             document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('text-brand'));
             const mobBtn = document.getElementById('mob-nav-' + tabId.replace('tab-', ''));
             if (mobBtn) mobBtn.classList.add('text-brand');
@@ -1964,11 +2296,9 @@
             }
         }
 
-        // اعتراض زر الرجوع في التليفون (Back Button)
         window.addEventListener('popstate', async () => {
             isHandlingPopState = true;
 
-            // 1. إذا كانت نافذة الكاميرا مفتوحة، أوقف الكاميرا وأغلق النافذة
             const camModal = document.getElementById('modal-camera-scanner');
             if (camModal && !camModal.classList.contains('hidden')) {
                 await closeCameraScannerModal();
@@ -1978,7 +2308,6 @@
                 return;
             }
 
-            // 2. إذا كانت هناك أي نافذة منبثقة أخرى مفتوحة، أغلقها فقط وابقَ في نفس الصفحة
             const openModals = Array.from(document.querySelectorAll('.modal-backdrop')).filter(m => !m.classList.contains('hidden'));
             if (openModals.length > 0) {
                 openModals.forEach(m => {
@@ -1991,7 +2320,6 @@
                 return;
             }
 
-            // 3. إذا كانت القائمة الجانبية للموبايل مفتوحة، أغلقها فقط
             const sb = document.getElementById('main-sidebar');
             if (sb && sb.classList.contains('mobile-open')) {
                 toggleMobileSidebar(false, true);
@@ -2001,7 +2329,6 @@
                 return;
             }
 
-            // 4. إذا كان الأدمن في أي صفحة فرعية، أرجعه فوراً للصفحة الأساسية (مركز القيادة والماليات)
             const currentActiveTab = document.querySelector('.tab-pane.active');
             if (currentActiveTab && currentActiveTab.id !== 'tab-overview') {
                 switchTab('tab-overview', document.getElementById('nav-btn-overview'), true);
@@ -2016,7 +2343,6 @@
         document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeCameraScannerModal(); document.querySelectorAll('.modal-backdrop').forEach(m => { m.classList.add('hidden'); m.classList.remove('flex'); }); } });
 
         window.addEventListener('DOMContentLoaded', () => {
-            // تثبيت الصفحة الأساسية كمرجع أول في سجل التصفح للموبايل
             history.replaceState({ type: 'home', tabId: 'tab-overview' }, '', '#tab-overview');
             history.pushState({ type: 'tab', tabId: 'tab-overview' }, '', '#tab-overview');
 
