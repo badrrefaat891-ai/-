@@ -214,15 +214,13 @@
             FIN_DB:  "https://script.google.com/macros/s/AKfycbwIakNG3LFoVSusSqBkmwW5bJEQBqp6j4mbYyZn5dwh1qXTVUplYLa5uje5kHhTaopq/exec"
         };
 
-        // باسورد الإدارة مثبت على 150150
+        // باسورد الإدارة مثبت على 150150 + حسابات افتراضية للتاجر والمندوب والشريك
         let cloudAccounts = [
             { user: 'admin', pass: '150150', phone: '01000000000', code: 'ADM-01', role: 'ADMIN', name: 'المدير العام', targetPage: 'admin.html' },
+            { user: 'piupoin', pass: '444888', phone: '201126389850', code: 'MER-101', role: 'MERCHANT', store: 'Piu Poin', name: 'احمد ناصر', discount: 0, targetPage: 'merchant.html' },
             { user: 'pepon', pass: '123456', phone: '01100000000', code: 'MER-101', role: 'MERCHANT', store: 'بيبون ستور', name: 'بدر رفعت', discount: 5, targetPage: 'merchant.html' },
-            { user: 'elnoor', pass: '123456', phone: '01022334455', code: 'MER-102', role: 'MERCHANT', store: 'متجر النور فاشون', name: 'أحمد النور', discount: 0, targetPage: 'merchant.html' },
-            { user: 'techzone', pass: '123456', phone: '01288776655', code: 'MER-103', role: 'MERCHANT', store: 'تك زون للإلكترونيات', name: 'كريم عادل', discount: 10, targetPage: 'merchant.html' },
             { user: 'ahmed_cr', pass: '123456', phone: '01011112222', id: 'CR-01', role: 'COURIER', name: 'أحمد المندوب', zone: 'المعادي وحلوان', comm: 20, targetPage: 'courier.html' },
-            { user: 'mahmoud_cr', pass: '123456', phone: '01233334444', id: 'CR-02', role: 'COURIER', name: 'محمود سمير', zone: 'الإسكندرية - سموحة', comm: 25, targetPage: 'courier.html' },
-            { user: 'karim_cr', pass: '123456', phone: '01155556666', id: 'CR-03', role: 'COURIER', name: 'كريم طارق', zone: 'مدينة نصر والتجمع', comm: 20, targetPage: 'courier.html' }
+            { user: 'partner1', pass: '123456', phone: '01000000000', id: 'PRT-01', role: 'PARTNER', name: 'شريك رئيسي', roleTitle: 'شريك بنسبة في الأرباح', percent: 25, paidTotal: 0, targetPage: 'partner.html' }
         ];
         let cloudOrders = [];
 
@@ -252,29 +250,31 @@
                 statusTxt.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyan-400"></i><span>جاري تحميل الحسابات والإعدادات من السحابة...</span>`;
                 bar.style.width = '40%';
 
+                const ts = Date.now();
                 const [coreRes, opsRes] = await Promise.all([
-                    fetch(CLOUD_URLS.CORE_DB).then(r => r.json()).catch(() => null),
-                    fetch(CLOUD_URLS.OPS_DB).then(r => r.json()).catch(() => null)
+                    fetch(`${CLOUD_URLS.CORE_DB}?t=${ts}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+                    fetch(`${CLOUD_URLS.OPS_DB}?t=${ts}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)
                 ]);
 
                 bar.style.width = '85%';
 
-                if (coreRes && coreRes.status === 'success') {
-                    const builtAccounts = [
-                        { user: 'admin', pass: '150150', phone: '01000000000', code: 'ADM-01', role: 'ADMIN', name: 'المدير العام', targetPage: 'admin.html' }
-                    ];
+                const builtAccounts = [
+                    { user: 'admin', pass: '150150', phone: '01000000000', code: 'ADM-01', role: 'ADMIN', name: 'المدير العام', targetPage: 'admin.html' }
+                ];
 
+                if (coreRes && coreRes.status === 'success') {
+                    // 1. تحميل حسابات التجار من الشيت
                     if (Array.isArray(coreRes.merchants) && coreRes.merchants.length > 0) {
                         coreRes.merchants.forEach(m => {
                             if (m.user || m.store) {
                                 builtAccounts.push({
                                     user: String(m.user || m.store).trim(),
-                                    pass: String(m.pass || '123456').trim(),
+                                    pass: String(m.pass !== undefined && m.pass !== '' ? m.pass : '123456').trim(),
                                     phone: String(m.phone || '').trim(),
-                                    code: String(m.code || 'MER-101'),
+                                    code: String(m.code || 'MER-101').trim(),
                                     role: 'MERCHANT',
-                                    store: String(m.store),
-                                    name: String(m.owner || m.store),
+                                    store: String(m.store).trim(),
+                                    name: String(m.owner || m.store).trim(),
                                     discount: parseFloat(m.discount) || 0,
                                     targetPage: 'merchant.html'
                                 });
@@ -282,17 +282,18 @@
                         });
                     }
 
+                    // 2. تحميل حسابات المناديب من الشيت
                     if (Array.isArray(coreRes.couriers) && coreRes.couriers.length > 0) {
                         coreRes.couriers.forEach(c => {
                             if (c.user || c.name) {
                                 builtAccounts.push({
                                     user: String(c.user || c.name).trim(),
-                                    pass: String(c.pass || '123456').trim(),
+                                    pass: String(c.pass !== undefined && c.pass !== '' ? c.pass : '123456').trim(),
                                     phone: String(c.phone || '').trim(),
-                                    id: String(c.id || 'CR-01'),
+                                    id: String(c.id || 'CR-01').trim(),
                                     role: 'COURIER',
-                                    name: String(c.name),
-                                    zone: String(c.zone || 'القاهرة'),
+                                    name: String(c.name).trim(),
+                                    zone: String(c.zone || 'القاهرة').trim(),
                                     comm: parseFloat(c.comm) || 20,
                                     targetPage: 'courier.html'
                                 });
@@ -300,9 +301,53 @@
                         });
                     }
 
-                    if (builtAccounts.length > 1) {
-                        cloudAccounts = builtAccounts;
+                    // 3. تحميل حسابات الشركاء من الشيت (أو من التخزين المحلي في حال إضافتهم من لوحة الأدمن)
+                    const sheetPartners = (Array.isArray(coreRes.partners) && coreRes.partners.length > 0)
+                        ? coreRes.partners
+                        : JSON.parse(localStorage.getItem('prime_partners_data') || '[]');
+
+                    if (Array.isArray(sheetPartners) && sheetPartners.length > 0) {
+                        localStorage.setItem('prime_partners_data', JSON.stringify(sheetPartners));
+                        sheetPartners.forEach(p => {
+                            if (p.user || p.name) {
+                                builtAccounts.push({
+                                    user: String(p.user || p.name).trim(),
+                                    pass: String(p.pass !== undefined && p.pass !== '' ? p.pass : '123456').trim(),
+                                    phone: String(p.phone || '').trim(),
+                                    id: String(p.id || 'PRT-01').trim(),
+                                    role: 'PARTNER',
+                                    name: String(p.name).trim(),
+                                    roleTitle: String(p.roleTitle || 'شريك بنسبة في الأرباح').trim(),
+                                    percent: parseFloat(p.percent) || 0,
+                                    paidTotal: parseFloat(p.paidTotal) || 0,
+                                    targetPage: 'partner.html'
+                                });
+                            }
+                        });
                     }
+                } else {
+                    // في حال عدم وجود اتصال لحظي، تحميل الشركاء المحفوظين محلياً من لوحة الأدمن
+                    const localPartners = JSON.parse(localStorage.getItem('prime_partners_data') || '[]');
+                    localPartners.forEach(p => {
+                        if (p.user || p.name) {
+                            builtAccounts.push({
+                                user: String(p.user || p.name).trim(),
+                                pass: String(p.pass !== undefined && p.pass !== '' ? p.pass : '123456').trim(),
+                                phone: String(p.phone || '').trim(),
+                                id: String(p.id || 'PRT-01').trim(),
+                                role: 'PARTNER',
+                                name: String(p.name).trim(),
+                                roleTitle: String(p.roleTitle || 'شريك بنسبة في الأرباح').trim(),
+                                percent: parseFloat(p.percent) || 0,
+                                paidTotal: parseFloat(p.paidTotal) || 0,
+                                targetPage: 'partner.html'
+                            });
+                        }
+                    });
+                }
+
+                if (builtAccounts.length > 1) {
+                    cloudAccounts = builtAccounts;
                 }
 
                 if (opsRes && opsRes.status === 'success' && Array.isArray(opsRes.orders)) {
@@ -322,26 +367,27 @@
         }
 
         function findAccountByIdentifier(identifier) {
-            const clean = (identifier || '').trim().toLowerCase();
+            const clean = String(identifier || '').trim().toLowerCase();
             if (!clean) return null;
             return cloudAccounts.find(acc =>
-                String(acc.user).toLowerCase() === clean ||
-                (acc.phone && String(acc.phone) === clean) ||
-                (acc.code && String(acc.code).toLowerCase() === clean) ||
-                (acc.id && String(acc.id).toLowerCase() === clean) ||
-                (acc.store && String(acc.store).toLowerCase() === clean)
+                String(acc.user || '').trim().toLowerCase() === clean ||
+                (acc.phone && String(acc.phone).trim() === clean) ||
+                (acc.code && String(acc.code).trim().toLowerCase() === clean) ||
+                (acc.id && String(acc.id).trim().toLowerCase() === clean) ||
+                (acc.store && String(acc.store).trim().toLowerCase() === clean) ||
+                (acc.name && String(acc.name).trim().toLowerCase() === clean)
             );
         }
 
         function handleGatewayLogin(event) {
             event.preventDefault();
             const userInp = document.getElementById('login-username').value;
-            const passInp = document.getElementById('login-password').value.trim();
+            const passInp = String(document.getElementById('login-password').value || '').trim();
             const alertBox = document.getElementById('login-alert');
 
             const account = findAccountByIdentifier(userInp);
 
-            if (!account || String(account.pass) !== String(passInp)) {
+            if (!account || String(account.pass).trim() !== passInp) {
                 alertBox.className = "flex p-3.5 rounded-2xl text-xs font-extrabold items-center gap-2.5 bg-rose-50 text-rose-700 border border-rose-200 shake-error";
                 alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation text-base"></i><span>بيانات الدخول غير صحيحة، يرجى التأكد من اسم المستخدم وكلمة المرور.</span>`;
                 return;
