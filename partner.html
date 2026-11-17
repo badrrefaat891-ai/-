@@ -81,7 +81,7 @@
         <div class="w-64 h-1.5 bg-slate-800 rounded-full overflow-hidden mt-5 border border-slate-700">
             <div id="prime-loader-bar" class="h-full bg-gradient-to-l from-amber-400 to-indigo-600 transition-all duration-300" style="width: 35%"></div>
         </div>
-        <p class="text-[11px] font-bold text-slate-300 mt-3">جاري جلب الملخص المالي وحصة أرباحك...</p>
+        <p class="text-[11px] font-bold text-slate-300 mt-3">جاري جلب الملخص المالي وحركات حسابك...</p>
     </div>
 
     <!-- مؤشر المزامنة السحابية -->
@@ -160,6 +160,7 @@
 
                     <button onclick="switchTab('tab-payouts', this)" id="nav-btn-payouts" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition">
                         <div class="flex items-center gap-3"><i class="fa-solid fa-file-invoice-dollar text-sm w-5 text-center text-emerald-400"></i><span class="nav-label">سجل مسحوباتي وكشف PDF</span></div>
+                        <span id="badge-payout-count" class="badge-count px-2 py-0.5 text-[10px] rounded-full bg-emerald-500/20 text-emerald-300">0</span>
                     </button>
 
                     <button onclick="switchTab('tab-simulator', this)" id="nav-btn-simulator" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition">
@@ -189,7 +190,7 @@
         <!-- ================= 3. منطقة المحتوى الرئيسي للشريك ================= -->
         <main class="flex-1 h-full overflow-y-auto p-3 sm:p-5 md:p-6 pb-24 lg:pb-6 space-y-5">
 
-            <!-- ================= الصفحة 1: الملخص المالي الخارجي وحصة الشريك ================= -->
+            <!-- ================= الصفحة 1: الملخص المالي الخارجي وحصة الشريك والمعاملات ================= -->
             <div id="tab-overview" class="tab-pane active space-y-5">
 
                 <!-- بانر الشريك الرئيسي وطلب سحب النسبة -->
@@ -200,7 +201,7 @@
                             <span id="hero-partner-code" class="font-mono text-xs text-indigo-200 font-bold">#PRT-01</span>
                         </div>
                         <h1 class="text-lg sm:text-2xl font-black mt-1">أهلاً بك، <span id="hero-partner-name">الشريك</span> 👋</h1>
-                        <p class="text-xs text-indigo-100">ملخص حي ومباشر لإجمالي أعمال الشركة، المبيعات، المصروفات، ونصيبك الصافي من الأرباح حسب نسبتك (<strong id="hero-partner-pct" class="text-amber-300">0%</strong>)</p>
+                        <p class="text-xs text-indigo-100">ملخص حي ومباشر لإجمالي أعمال الشركة، المبيعات، المصروفات، ونصيبك الصافي المتبقي للسحب حسب نسبتك (<strong id="hero-partner-pct" class="text-amber-300">0%</strong>)</p>
                     </div>
                     <div class="flex flex-wrap gap-2.5 w-full sm:w-auto">
                         <button onclick="openWithdrawRequestModal()" class="flex-1 sm:flex-initial justify-center px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-2xl text-xs shadow-xl flex items-center gap-2 transition transform hover:scale-105">
@@ -210,20 +211,20 @@
                     </div>
                 </div>
 
-                <!-- أولاً: بطاقات حصة الشريك الشخصية (الأهم للشريك) -->
+                <!-- أولاً: بطاقات حصة الشريك الشخصية (تتصفر تلقائياً فور الصرف من الأدمن) -->
                 <div>
-                    <h2 class="text-xs font-black text-slate-500 uppercase mb-2.5 px-1"><i class="fa-solid fa-star text-amber-500 ml-1"></i> ملخص محفظتك وحصتك في الأرباح</h2>
+                    <h2 class="text-xs font-black text-slate-500 uppercase mb-2.5 px-1"><i class="fa-solid fa-star text-amber-500 ml-1"></i> ملخص محفظتك وحصتك في الأرباح (بعد خصم المسحوبات)</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                         <div class="bg-white p-5 rounded-2xl border-2 border-emerald-500 shadow-sm">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <span class="text-xs font-extrabold text-emerald-700">نصيبك الجاهز للسحب الآن</span>
+                                    <span class="text-xs font-extrabold text-emerald-700">نصيبك المتبقي الجاهز للسحب الآن</span>
                                     <h3 id="my-ready-share" class="text-2xl font-black text-emerald-600 mt-1">0 ج.م</h3>
                                 </div>
                                 <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl"><i class="fa-solid fa-sack-dollar"></i></div>
                             </div>
                             <div class="mt-3 text-[11px] text-emerald-700 font-bold flex justify-between items-center">
-                                <span>متاح للتحويل الفوري</span>
+                                <span id="my-ready-status-note">متاح للتحويل الفوري</span>
                                 <button onclick="openWithdrawRequestModal()" class="underline font-black">اطلب سحبك &larr;</button>
                             </div>
                         </div>
@@ -236,32 +237,32 @@
                                 </div>
                                 <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl"><i class="fa-solid fa-percent"></i></div>
                             </div>
-                            <div class="mt-3 text-[11px] text-slate-400 font-bold">من إجمالي أرباح الشركة (100%)</div>
+                            <div class="mt-3 text-[11px] text-slate-400 font-bold">من صافي أرباح الشركة (100%)</div>
                         </div>
 
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="bg-white p-5 rounded-2xl border border-blue-200 shadow-sm">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <span class="text-xs font-bold text-slate-400">إجمالي ما استلمته سابقاً</span>
+                                    <span class="text-xs font-extrabold text-blue-700">إجمالي ما استلمته سابقاً</span>
                                     <h3 id="my-paid-total" class="text-2xl font-black text-blue-700 mt-1">0 ج.م</h3>
                                 </div>
                                 <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl"><i class="fa-solid fa-circle-check"></i></div>
                             </div>
                             <div class="mt-3 text-[11px] text-blue-600 font-bold flex justify-between">
-                                <span>توزيعات مستلمة</span>
-                                <button onclick="switchTab('tab-payouts', document.getElementById('nav-btn-payouts'))" class="underline">عرض السجل &larr;</button>
+                                <span>دفعات تم صرفها لك</span>
+                                <button onclick="switchTab('tab-payouts', document.getElementById('nav-btn-payouts'))" class="underline font-black">سجل الدفعات &larr;</button>
                             </div>
                         </div>
 
                         <div class="bg-slate-900 text-white p-5 rounded-2xl shadow-sm">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <span class="text-xs font-bold text-amber-400">إجمالي أرباحك التاريخية المتراكمة</span>
+                                    <span class="text-xs font-bold text-amber-400">إجمالي استحقاقك الكلي من الأرباح</span>
                                     <h3 id="my-lifetime-profit" class="text-2xl font-black text-white mt-1">0 ج.م</h3>
                                 </div>
                                 <div class="w-11 h-11 rounded-2xl bg-white/10 text-amber-400 flex items-center justify-center text-xl"><i class="fa-solid fa-chart-line"></i></div>
                             </div>
-                            <div class="mt-3 text-[11px] text-slate-300 font-bold">المستلم سابقاً + المتاح حالياً</div>
+                            <div class="mt-3 text-[11px] text-slate-300 font-bold">المستلم سابقاً + المتبقي حالياً</div>
                         </div>
                     </div>
                 </div>
@@ -283,20 +284,32 @@
                         </div>
 
                         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
-                            <span class="text-xs font-bold text-rose-600 block">3. إجمالي المصروفات والتشغيل</span>
+                            <span class="text-xs font-bold text-rose-600 block">3. إجمالي مصروفات التشغيل</span>
                             <h3 id="co-total-expenses" class="text-xl font-black text-rose-600 mt-1.5">0 ج.م</h3>
-                            <span class="text-[11px] text-slate-500 font-semibold mt-2 block">المصاريف المخصومة من الإيرادات</span>
+                            <span class="text-[11px] text-slate-500 font-semibold mt-2 block">المصاريف التشغيلية المخصومة</span>
                         </div>
 
                         <div class="bg-emerald-50/70 p-4 sm:p-5 rounded-2xl border-2 border-emerald-500/40 shadow-sm">
-                            <span class="text-xs font-extrabold text-emerald-900 block">4. صافي ربح الشركة المتبقي حالياً (100%)</span>
+                            <span class="text-xs font-extrabold text-emerald-900 block">4. وعاء صافي ربح الشركة (100%)</span>
                             <h3 id="co-net-profit-now" class="text-xl font-black text-emerald-700 mt-1.5">0 ج.م</h3>
-                            <span id="co-historical-profit-note" class="text-[11px] text-emerald-800 font-bold mt-2 block">المتراكم التاريخي للشركة: 0 ج.م</span>
+                            <span id="co-historical-profit-note" class="text-[11px] text-emerald-800 font-bold mt-2 block">المتبقي بالخزنة بعد التوزيعات: 0 ج.م</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- ثالثاً: ملخص حركة الشحنات العام (أرقام إجمالية فقط بدون أي أسماء عملاء أو تجار) -->
+                <!-- ثالثاً: سجل المعاملات والدفعات المنصرفة لحساب الشريك (تظهر مباشرة على الشاشة الرئيسية) -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
+                        <div>
+                            <h3 class="font-black text-sm text-slate-900"><i class="fa-solid fa-money-Check-dollar text-emerald-600 ml-1"></i> سجل المعاملات والدفعات المنصرفة لحسابك</h3>
+                            <p class="text-[11px] text-slate-500">جميع عمليات صرف وتوزيع الأرباح التي قامت الإدارة بتحويلها أو تسجيلها لحسابك</p>
+                        </div>
+                        <button onclick="switchTab('tab-payouts', document.getElementById('nav-btn-payouts'))" class="text-xs font-black text-brand hover:underline">فتح كشف الحساب للطباعة PDF &larr;</button>
+                    </div>
+                    <div id="overview-partner-transactions" class="space-y-2 text-xs max-h-60 overflow-y-auto"></div>
+                </div>
+
+                <!-- رابعاً: ملخص حركة الشحنات العام (أرقام إجمالية فقط بدون أي أسماء عملاء أو تجار) -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                     <div class="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
                         <div>
@@ -364,9 +377,9 @@
 
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center bg-slate-50 p-3.5 rounded-xl border">
                         <div><span class="text-[10px] text-slate-400 block">نسبة الشراكة المعتمدة</span><strong id="stmt-pct" class="text-sm font-black text-indigo-700">0%</strong></div>
-                        <div><span class="text-[10px] text-slate-400 block">صافي ربح الشركة الحالي (100%)</span><strong id="stmt-co-profit" class="text-sm font-black text-slate-900">0 ج.م</strong></div>
+                        <div><span class="text-[10px] text-slate-400 block">إجمالي استحقاقك من الأرباح</span><strong id="stmt-co-profit" class="text-sm font-black text-slate-900">0 ج.م</strong></div>
                         <div><span class="text-[10px] text-slate-400 block">إجمالي ما استلمته سابقاً</span><strong id="stmt-paid-before" class="text-sm font-black text-blue-700">0 ج.م</strong></div>
-                        <div class="bg-emerald-600 text-white rounded-lg p-1.5"><span class="text-[10px] text-emerald-100 block">نصيبك المتاح للسحب الآن</span><strong id="stmt-ready-now" class="text-base font-black">0 ج.م</strong></div>
+                        <div class="bg-emerald-600 text-white rounded-lg p-1.5"><span class="text-[10px] text-emerald-100 block">نصيبك المتبقي للسحب الآن</span><strong id="stmt-ready-now" class="text-base font-black">0 ج.م</strong></div>
                     </div>
 
                     <div>
@@ -376,7 +389,7 @@
                 </div>
             </div>
 
-            <!-- ================= الصفحة 3: حاسبة توقعات أرباح الشريك (ميزة تحفيزية آمنة) ================= -->
+            <!-- ================= الصفحة 3: حاسبة توقعات أرباح الشريك ================= -->
             <div id="tab-simulator" class="tab-pane space-y-5">
                 <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5 max-w-3xl">
                     <div class="border-b pb-3">
@@ -419,7 +432,7 @@
                 </div>
             </div>
 
-            <!-- ================= الصفحة 4: الملف الشخصي للشريك (للقراءة فقط) ================= -->
+            <!-- ================= الصفحة 4: الملف الشخصي للشريك ================= -->
             <div id="tab-profile" class="tab-pane space-y-5">
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
                     <div>
@@ -495,7 +508,7 @@
             <div class="p-5 space-y-4">
                 <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex justify-between items-center">
                     <div>
-                        <span class="text-[11px] text-emerald-800 font-bold block">رصيد نسبتك المتاح للسحب حالياً:</span>
+                        <span class="text-[11px] text-emerald-800 font-bold block">رصيد نسبتك المتبقي للسحب حالياً:</span>
                         <strong id="req-modal-available" class="text-lg font-black text-emerald-700">0 ج.م</strong>
                     </div>
                     <span id="req-modal-pct" class="px-3 py-1 bg-emerald-200 text-emerald-950 rounded-xl font-black">0%</span>
@@ -533,7 +546,7 @@
 
     <div id="print-mount-root"></div>
 
-    <!-- ================= المحرك البرمجي لبوابة الشريك (آمن تماماً + زر الرجوع الذكي) ================= -->
+    <!-- ================= المحرك البرمجي لبوابة الشريك (مربوط بتصفير الأرباح وسجل المعاملات) ================= -->
     <script>
         const PRIME_CLOUD_URLS = {
             CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzDQzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
@@ -543,29 +556,51 @@
 
         let partnersList = JSON.parse(localStorage.getItem('prime_partners_data') || '[]');
         if (partnersList.length === 0) {
-            partnersList = [{ id: 'PRT-01', name: 'شريك رئيسي', roleTitle: 'شريك بنسبة في الأرباح', phone: '01000000000', user: 'partner1', pass: '123456', percent: 25, paidTotal: 0 }];
+            partnersList = [{ id: 'PRT-01', name: 'الشريك الرئيسي', roleTitle: 'شريك بنسبة في الأرباح', phone: '01000000000', user: 'partner1', pass: '123456', percent: 7.5, paidTotal: 0 }];
         }
 
         let currentPartner = partnersList[0];
-        try {
-            const sess = JSON.parse(localStorage.getItem('swift_active_session') || 'null');
-            if (sess && (sess.role === 'PARTNER' || sess.percent !== undefined)) {
-                const found = partnersList.find(p => String(p.user).toLowerCase() === String(sess.user).toLowerCase() || p.name === sess.name);
-                if (found) currentPartner = found;
-                else currentPartner = {
-                    id: String(sess.id || 'PRT-01'),
-                    name: String(sess.name || 'الشريك'),
-                    roleTitle: String(sess.roleTitle || 'شريك بنسبة في الأرباح'),
-                    phone: String(sess.phone || '01000000000'),
-                    user: String(sess.user || 'partner1'),
-                    pass: String(sess.pass || '123456'),
-                    percent: parseFloat(sess.percent) || 20,
-                    paidTotal: parseFloat(sess.paidTotal) || 0
-                };
-            }
-        } catch (e) {}
 
-        // متغيرات الأرقام الإجمالية فقط (بدون حفظ أي أسماء عملاء أو تجار في الواجهة)
+        function syncCurrentPartnerFromStorageAndSession() {
+            const latestStoredList = JSON.parse(localStorage.getItem('prime_partners_data') || '[]');
+            if (Array.isArray(latestStoredList) && latestStoredList.length > 0) {
+                partnersList = latestStoredList;
+            }
+
+            try {
+                const sess = JSON.parse(localStorage.getItem('swift_active_session') || 'null');
+                if (sess && (sess.role === 'PARTNER' || sess.percent !== undefined || String(sess.id || '').startsWith('PRT'))) {
+                    const found = partnersList.find(p =>
+                        String(p.id || '').trim().toLowerCase() === String(sess.id || '').trim().toLowerCase() ||
+                        String(p.user || '').trim().toLowerCase() === String(sess.user || '').trim().toLowerCase() ||
+                        String(p.name || '').trim().toLowerCase() === String(sess.name || '').trim().toLowerCase()
+                    );
+                    if (found) {
+                        currentPartner = found;
+                    } else if (partnersList.length === 1) {
+                        currentPartner = partnersList[0];
+                    } else {
+                        currentPartner = {
+                            id: String(sess.id || 'PRT-01'),
+                            name: String(sess.name || 'الشريك'),
+                            roleTitle: String(sess.roleTitle || 'شريك بنسبة في الأرباح'),
+                            phone: String(sess.phone || '01000000000'),
+                            user: String(sess.user || 'partner1'),
+                            pass: String(sess.pass || '123456'),
+                            percent: parseFloat(sess.percent) || 7.5,
+                            paidTotal: parseFloat(sess.paidTotal) || 0
+                        };
+                    }
+                } else {
+                    currentPartner = partnersList[0];
+                }
+            } catch (e) {
+                currentPartner = partnersList[0];
+            }
+        }
+
+        syncCurrentPartnerFromStorageAndSession();
+
         let summaryMetrics = {
             totalOrders: 0,
             deliveredOrders: 0,
@@ -574,11 +609,11 @@
             returnedOrders: 0,
             grossCollections: 0,
             grossCompanyRevenue: 0,
-            totalExpenses: 0,
-            withdrawnProfitsTotal: 0,
-            currentNetProfit: 0,
-            historicalNetProfit: 0,
-            myPayoutLogs: []
+            operatingExpenses: 0,
+            totalOperatingProfit: 0,
+            remainingCompanyProfitAfterWithdrawals: 0,
+            myPayoutLogs: [],
+            logsPaidSum: 0
         };
 
         function getFormattedNow() {
@@ -607,7 +642,10 @@
             const dot = document.getElementById('prime-sync-dot');
             const txt = document.getElementById('prime-sync-text');
             const bar = document.getElementById('prime-loader-bar');
-            if (manualRefresh && txt) txt.innerText = '⏳ جاري تحديث الأرقام المالية...';
+            if (manualRefresh && txt) txt.innerText = '⏳ جاري تحديث الأرقام والمعاملات...';
+
+            // قراءة أحدث تعديل من الذاكرة المحلية أولاً
+            syncCurrentPartnerFromStorageAndSession();
 
             const safetyTimer = setTimeout(() => {
                 document.getElementById('prime-cloud-preloader')?.classList.add('loaded');
@@ -635,13 +673,7 @@
                         paidTotal: parseFloat(p.paidTotal) || 0
                     }));
                     localStorage.setItem('prime_partners_data', JSON.stringify(partnersList));
-                    const sess = JSON.parse(localStorage.getItem('swift_active_session') || 'null');
-                    if (sess) {
-                        const fp = partnersList.find(p => String(p.user).toLowerCase() === String(sess.user).toLowerCase() || p.name === sess.name);
-                        if (fp) currentPartner = fp;
-                    } else {
-                        currentPartner = partnersList[0];
-                    }
+                    syncCurrentPartnerFromStorageAndSession();
                 }
 
                 let totalOrd = 0, delivOrd = 0, actOrd = 0, newOrd = 0, retOrd = 0;
@@ -671,19 +703,42 @@
                     });
                 }
 
-                let totExp = 0, withdrawnTot = 0, myLogs = [];
+                let opExpenses = 0, ownerWithdrawals = 0, myLogs = [];
                 if (finRes && finRes.status === 'success') {
-                    if (finRes.summary) withdrawnTot = parseFloat(finRes.summary.withdrawnProfitsTotal) || 0;
                     if (Array.isArray(finRes.expenses)) {
-                        totExp = finRes.expenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+                        // المصروفات التشغيلية فقط (لا تشمل توزيعات أرباح الشركاء أو المسحوبات الشخصية)
+                        opExpenses = finRes.expenses
+                            .filter(e => e.category !== 'توزيعات أرباح شركاء' && e.category !== 'مسحوبات أرباح')
+                            .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+                        ownerWithdrawals = finRes.expenses
+                            .filter(e => e.category === 'مسحوبات أرباح')
+                            .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
                     }
+
+                    // جمع كافة معاملات الصرف الخاصة بالشريك من دفتر الخزنة (treasuryLogs)
                     if (Array.isArray(finRes.treasuryLogs)) {
-                        myLogs = finRes.treasuryLogs.filter(l => String(l.text || '').includes(currentPartner.name));
+                        myLogs = finRes.treasuryLogs.filter(l => {
+                            const t = String(l.text || '');
+                            if (t.includes(currentPartner.name) || t.includes(currentPartner.id)) return true;
+                            if (partnersList.length === 1 && (t.includes('حصة الشريك') || t.includes('أرباح الشريك'))) return true;
+                            return false;
+                        });
                     }
                 }
 
-                const netNow = Math.max(0, grossRev - totExp);
-                const histNet = withdrawnTot + netNow;
+                const logsPaidSum = myLogs.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+
+                // إذا لم يكن هناك تخزين محلي على هذا الجهاز وكان هناك سجل صرف في الخزنة، نعتمد المبلغ المنصرف
+                const hasLocalPartners = localStorage.getItem('prime_partners_data') !== null;
+                if (!hasLocalPartners && (parseFloat(currentPartner.paidTotal) || 0) === 0 && logsPaidSum > 0) {
+                    currentPartner.paidTotal = logsPaidSum;
+                }
+
+                // وعاء صافي ربح الشركة التشغيلي (100%)
+                const totalOpProfit = Math.max(0, grossRev - opExpenses);
+                const allPartnersPaid = partnersList.reduce((s, p) => s + (parseFloat(p.paidTotal) || 0), 0);
+                const remCompanyProfit = Math.max(0, totalOpProfit - allPartnersPaid - ownerWithdrawals);
 
                 summaryMetrics = {
                     totalOrders: totalOrd,
@@ -693,11 +748,11 @@
                     returnedOrders: retOrd,
                     grossCollections: grossCol,
                     grossCompanyRevenue: grossRev,
-                    totalExpenses: totExp,
-                    withdrawnProfitsTotal: withdrawnTot,
-                    currentNetProfit: netNow,
-                    historicalNetProfit: histNet,
-                    myPayoutLogs: myLogs
+                    operatingExpenses: opExpenses,
+                    totalOperatingProfit: totalOpProfit,
+                    remainingCompanyProfitAfterWithdrawals: remCompanyProfit,
+                    myPayoutLogs: myLogs,
+                    logsPaidSum: logsPaidSum
                 };
 
                 if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
@@ -721,9 +776,12 @@
             document.getElementById('prime-loader-title').innerText = savedBrand;
 
             const pct = parseFloat(currentPartner.percent) || 0;
-            const myReadyShare = Math.round((summaryMetrics.currentNetProfit * pct) / 100);
+            // إجمالي استحقاق الشريك من صافي الربح التشغيلي (100%)
+            const myTotalEntitled = Math.round((summaryMetrics.totalOperatingProfit * pct) / 100);
+            // إجمالي ما استلمه الشريك سابقاً
             const myPaidBefore = parseFloat(currentPartner.paidTotal) || 0;
-            const myLifetime = myPaidBefore + myReadyShare;
+            // نصيب الشريك المتبقي الجاهز للسحب الآن (يتصفر فور الصرف!)
+            const myReadyShare = Math.max(0, myTotalEntitled - myPaidBefore);
 
             // الهيدر والقائمة الجانبية
             document.getElementById('header-partner-name').innerText = currentPartner.name;
@@ -732,6 +790,9 @@
             document.getElementById('sidebar-partner-name').innerText = currentPartner.name;
             document.getElementById('sidebar-partner-badge').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>شريك بنسبة ${pct}%`;
             document.getElementById('sidebar-footer-pct').innerText = `${pct}% من الأرباح`;
+            if (document.getElementById('badge-payout-count')) {
+                document.getElementById('badge-payout-count').innerText = summaryMetrics.myPayoutLogs.length;
+            }
 
             // البانر وبطاقات الشريك
             document.getElementById('hero-partner-code').innerText = '#' + currentPartner.id;
@@ -739,16 +800,17 @@
             document.getElementById('hero-partner-pct').innerText = pct + '%';
 
             document.getElementById('my-ready-share').innerText = myReadyShare.toLocaleString() + ' ج.م';
+            document.getElementById('my-ready-status-note').innerText = myReadyShare > 0 ? 'متاح للتحويل الفوري' : 'تم صرف كامل مستحقاتك الحالية ✓';
             document.getElementById('my-share-percent').innerText = pct + '%';
             document.getElementById('my-paid-total').innerText = myPaidBefore.toLocaleString() + ' ج.م';
-            document.getElementById('my-lifetime-profit').innerText = myLifetime.toLocaleString() + ' ج.م';
+            document.getElementById('my-lifetime-profit').innerText = myTotalEntitled.toLocaleString() + ' ج.م';
 
             // الأرقام الإجمالية للشركة من الخارج
             document.getElementById('co-gross-collections').innerText = summaryMetrics.grossCollections.toLocaleString() + ' ج.م';
             document.getElementById('co-gross-revenue').innerText = summaryMetrics.grossCompanyRevenue.toLocaleString() + ' ج.م';
-            document.getElementById('co-total-expenses').innerText = summaryMetrics.totalExpenses.toLocaleString() + ' ج.م';
-            document.getElementById('co-net-profit-now').innerText = summaryMetrics.currentNetProfit.toLocaleString() + ' ج.م';
-            document.getElementById('co-historical-profit-note').innerText = `المتراكم التاريخي للشركة: ${summaryMetrics.historicalNetProfit.toLocaleString()} ج.م`;
+            document.getElementById('co-total-expenses').innerText = summaryMetrics.operatingExpenses.toLocaleString() + ' ج.م';
+            document.getElementById('co-net-profit-now').innerText = summaryMetrics.totalOperatingProfit.toLocaleString() + ' ج.م';
+            document.getElementById('co-historical-profit-note').innerText = `المتبقي بالخزنة بعد التوزيعات: ${summaryMetrics.remainingCompanyProfitAfterWithdrawals.toLocaleString()} ج.م`;
 
             // مؤشر الشحنات الإجمالي
             document.getElementById('co-ord-total').innerText = summaryMetrics.totalOrders;
@@ -761,28 +823,52 @@
             const successRate = finishedCount > 0 ? Math.round((summaryMetrics.deliveredOrders / finishedCount) * 100) : 100;
             document.getElementById('co-delivery-rate-badge').innerText = `نسبة نجاح التسليم: ${successRate}%`;
 
+            // عرض المعاملات والدفعات في الشاشة الرئيسية وفي كشف الحساب PDF
+            const logsBox = document.getElementById('partner-payout-logs');
+            const overviewLogsBox = document.getElementById('overview-partner-transactions');
+
+            let logsHtml = '';
+            if (summaryMetrics.myPayoutLogs.length === 0 && myPaidBefore === 0) {
+                logsHtml = `<div class="p-4 rounded-xl bg-slate-50 border text-center text-slate-400 font-bold">لا توجد معاملات صرف مسجلة لحسابك حتى الآن — رصيدك المتاح جاهز للسحب</div>`;
+            } else {
+                logsHtml = summaryMetrics.myPayoutLogs.map(l => `
+                    <div class="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200 flex justify-between items-center">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <strong class="text-slate-900 block">${l.text}</strong>
+                                <span class="text-[10px] text-slate-500 font-bold"><i class="fa-regular fa-clock ml-1"></i>${l.time}</span>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg font-black text-sm">+${(parseFloat(l.amount) || 0).toLocaleString()} ج.م (تم الصرف ✓)</span>
+                    </div>
+                `).join('');
+
+                if (myPaidBefore > 0 && summaryMetrics.myPayoutLogs.length === 0) {
+                    logsHtml = `
+                    <div class="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200 flex justify-between items-center">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <strong class="text-slate-900 block">إجمالي دفعات أرباح منصرفة ومعتمدة لحساب الشريك (${currentPartner.name})</strong>
+                                <span class="text-[10px] text-slate-500 font-bold">مسجلة ومعتمدة من الإدارة</span>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg font-black text-sm">+${myPaidBefore.toLocaleString()} ج.م (تم الصرف ✓)</span>
+                    </div>`;
+                }
+            }
+
+            if (logsBox) logsBox.innerHTML = logsHtml;
+            if (overviewLogsBox) overviewLogsBox.innerHTML = logsHtml;
+
             // كشف الحساب PDF
             document.getElementById('stmt-partner-info').innerText = `الشريك: ${currentPartner.name} (#${currentPartner.id}) | الصفة: ${currentPartner.roleTitle} | هاتف: ${currentPartner.phone}`;
             document.getElementById('stmt-date').innerText = getFormattedNow();
             document.getElementById('stmt-pct').innerText = pct + '%';
-            document.getElementById('stmt-co-profit').innerText = summaryMetrics.currentNetProfit.toLocaleString() + ' ج.م';
+            document.getElementById('stmt-co-profit').innerText = myTotalEntitled.toLocaleString() + ' ج.م';
             document.getElementById('stmt-paid-before').innerText = myPaidBefore.toLocaleString() + ' ج.م';
             document.getElementById('stmt-ready-now').innerText = myReadyShare.toLocaleString() + ' ج.م';
-
-            const logsBox = document.getElementById('partner-payout-logs');
-            if (summaryMetrics.myPayoutLogs.length === 0) {
-                logsBox.innerHTML = `<div class="p-4 rounded-xl bg-slate-50 border text-center text-slate-400 font-bold">لا توجد دفعات مسحوبة مسجلة باسمك في السجل الحالي — رصيدك المتاح جاهز للسحب</div>`;
-            } else {
-                logsBox.innerHTML = summaryMetrics.myPayoutLogs.map(l => `
-                    <div class="p-3 rounded-xl bg-slate-50 border flex justify-between items-center">
-                        <div>
-                            <strong class="text-slate-900">${l.text}</strong>
-                            <span class="block text-[10px] text-slate-400">${l.time}</span>
-                        </div>
-                        <strong class="text-emerald-600 font-black text-sm">${(parseFloat(l.amount) || 0).toLocaleString()} ج.م</strong>
-                    </div>
-                `).join('');
-            }
 
             // الملف الشخصي
             document.getElementById('prof-card-name').innerText = currentPartner.name;
@@ -825,7 +911,10 @@
 
         function openWithdrawRequestModal() {
             const pct = parseFloat(currentPartner.percent) || 0;
-            const myReadyShare = Math.round((summaryMetrics.currentNetProfit * pct) / 100);
+            const myTotalEntitled = Math.round((summaryMetrics.totalOperatingProfit * pct) / 100);
+            const myPaidBefore = parseFloat(currentPartner.paidTotal) || 0;
+            const myReadyShare = Math.max(0, myTotalEntitled - myPaidBefore);
+
             document.getElementById('req-modal-available').innerText = myReadyShare.toLocaleString() + ' ج.م';
             document.getElementById('req-modal-pct').innerText = pct + '%';
             document.getElementById('req-withdraw-amount').value = myReadyShare > 0 ? myReadyShare : '';
@@ -835,18 +924,21 @@
 
         function submitPartnerWithdrawalRequest() {
             const pct = parseFloat(currentPartner.percent) || 0;
-            const myReadyShare = Math.round((summaryMetrics.currentNetProfit * pct) / 100);
+            const myTotalEntitled = Math.round((summaryMetrics.totalOperatingProfit * pct) / 100);
+            const myPaidBefore = parseFloat(currentPartner.paidTotal) || 0;
+            const myReadyShare = Math.max(0, myTotalEntitled - myPaidBefore);
+
             const reqAmount = parseFloat(document.getElementById('req-withdraw-amount').value) || 0;
             const method = document.getElementById('req-withdraw-method').value;
             const accountInfo = document.getElementById('req-withdraw-account').value.trim();
 
             if (reqAmount <= 0) return alert('يرجى كتابة المبلغ المطلوب سحبه.');
-            if (reqAmount > myReadyShare && myReadyShare > 0) {
-                return alert(`⚠️ المبلغ المطلوب (${reqAmount} ج.م) أكبر من رصيد نسبتك المتاح حالياً (${myReadyShare} ج.م).`);
+            if (reqAmount > myReadyShare && myReadyShare >= 0) {
+                return alert(`⚠️ المبلغ المطلوب (${reqAmount} ج.م) أكبر من رصيد نسبتك المتبقي للسحب حالياً (${myReadyShare} ج.م).`);
             }
 
             const companyName = localStorage.getItem('prime_company_name') || 'برايم';
-            const msg = `مرحباً إدارة ${companyName}،\nأنا الشريك: *${currentPartner.name}* (كود #${currentPartner.id} - نسبة الشراكة: *${pct}%*)\nأرغب في سحب مبلغ: *${reqAmount.toLocaleString()} ج.م* من حصتي في الأرباح الحالية.\nطريقة الاستلام: *${method}*\nبيانات التحويل: *${accountInfo || currentPartner.phone}*\nتاريخ الطلب: ${getFormattedNow()}`;
+            const msg = `مرحباً إدارة ${companyName}،\nأنا الشريك: *${currentPartner.name}* (كود #${currentPartner.id} - نسبة الشراكة: *${pct}%*)\nأرغب في سحب مبلغ: *${reqAmount.toLocaleString()} ج.م* من حصتي المتبقية في الأرباح.\nطريقة الاستلام: *${method}*\nبيانات التحويل: *${accountInfo || currentPartner.phone}*\nتاريخ الطلب: ${getFormattedNow()}`;
 
             closeModal('modal-withdraw-request');
             window.open(`https://wa.me/201126389850?text=${encodeURIComponent(msg)}`, '_blank');
@@ -873,9 +965,6 @@
 
         function setSidebarMode(mode) { const sb = document.getElementById('main-sidebar'); sb.classList.remove('sidebar-full', 'sidebar-mini', 'sidebar-closed'); sb.classList.add('sidebar-' + mode); }
 
-        // =========================================================================
-        // محرك زر الرجوع الذكي للموبايل (History API Router)
-        // =========================================================================
         let isHandlingPopState = false;
 
         function toggleMobileSidebar(open, skipHistory = false) {
