@@ -639,7 +639,7 @@
     <!-- حاوية النوافذ المنبثقة -->
     <div id="modals-container"></div>
     <div id="print-mount-root"></div>
-    <!-- ================= المحرك البرمجي الشامل للوحة الإدارة + نظام الشركاء ونسب الـ 100% ================= -->
+    <!-- ================= المحرك البرمجي الشامل للوحة الإدارة + تصفير مستحقات الشركاء عند الصرف ================= -->
     <script>
         const PRIME_CLOUD_URLS = {
             CORE_DB: "https://script.google.com/macros/s/AKfycbywVWNLtMEdICCgoGoUNaYZAT2nCkfzDQzLWkXh3mbfodguTfxMPmByMCqlRpU_hB1f/exec",
@@ -712,7 +712,6 @@
             { id: 'CR-01', name: 'أحمد المندوب', phone: '01011112222', user: 'ahmed_cr', pass: '123456', zone: 'المعادي وحلوان', comm: 20 }
         ];
 
-        // مصفوفة الشركاء ونسب الأرباح (تُحفظ محلياً وسحابياً)
         let partnersData = JSON.parse(localStorage.getItem('prime_partners_data') || '[]');
 
         const warehouseData = [];
@@ -723,9 +722,6 @@
 
         let currentPreviewAwbIdx = 0, activeMerchantSheetStore = '', activeCourierDetailsName = '', camScannedList = [];
 
-        // =========================================================================
-        // المحرك الذكي لتحليل وتنظيف اسم المنتج واستخراج الصنف الأساسي للمخزن والعدد الصحيح
-        // =========================================================================
         function extractBaseProductName(offerTitle) {
             let s = String(offerTitle || '').trim();
             s = s.replace(/^(عرض|باكيدج|مجموعة|بكج)\s*(الـ?|ال)?\s*\d*\s*/i, '');
@@ -953,7 +949,7 @@
                             ...p,
                             id: String(p.id || 'PRT-01').trim(),
                             name: String(p.name || '').trim(),
-                            roleTitle: String(p.roleTitle || 'شريك مؤسس').trim(),
+                            roleTitle: String(p.roleTitle || 'شريك بنسبة في الأرباح').trim(),
                             phone: String(p.phone || '').trim(),
                             user: String(p.user || '').trim(),
                             pass: String(p.pass !== undefined && p.pass !== '' ? p.pass : '123456').trim(),
@@ -1287,7 +1283,7 @@
                         <div class="bg-indigo-50 p-2.5 rounded-xl border border-indigo-200">
                             <label class="font-black text-indigo-900 block mb-1">نسبة الشريك من الأرباح (%) *</label>
                             <div class="flex items-center gap-1.5">
-                                <input id="prt-percent" type="number" min="1" max="100" step="0.5" value="20" class="w-full p-2 border border-indigo-300 rounded-lg font-black text-indigo-700 text-center text-sm bg-white">
+                                <input id="prt-percent" type="number" min="0.5" max="100" step="0.5" value="20" class="w-full p-2 border border-indigo-300 rounded-lg font-black text-indigo-700 text-center text-sm bg-white">
                                 <span class="font-black text-indigo-900 text-sm">%</span>
                             </div>
                         </div>
@@ -1299,8 +1295,9 @@
                             <label class="font-bold text-slate-700 block mb-1">كلمة المرور (Password) *</label>
                             <input id="prt-pass" type="text" value="123456" class="w-full p-2.5 border rounded-xl font-mono">
                         </div>
-                        <div class="sm:col-span-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 font-bold">
-                            💡 مجموع النسب الكلي للشركة هو <strong>100%</strong>. możesz تحديد 10% أو 20% أو 30% للشريك، والنسبة المتبقية تكون لصاحب الشركة الأساسي تلقائياً.
+                        <div class="sm:col-span-2">
+                            <label class="font-bold text-slate-700 block mb-1">إجمالي ما استلمه سابقاً (ج.م) — يمكنك تصفيره (0) لإعادة الحساب:</label>
+                            <input id="prt-paid-total" type="number" value="0" class="w-full p-2.5 border rounded-xl font-black text-blue-700 bg-slate-50">
                         </div>
                     </div>
                     <div class="p-4 border-t bg-slate-50 flex justify-end gap-2">
@@ -1435,34 +1432,86 @@
             order.historyLog.unshift({ action: actionLabel, time: nowStr });
         }
 
-        function getCurrentNetProfitValue() {
-            let earnedProfitFromOrders = 0;
+        // =========================================================================
+        // المحرك المالي الموحد (يفصل صافي الربح التشغيلي 100% ويصفر نصيب الشريك فور الصرف)
+        // =========================================================================
+        function getOperatingFinancials() {
+            let totalCouriersCash = 0, totalMerchantsDues = 0, earnedProfitFromOrders = 0;
             ordersData.forEach(o => {
                 const fin = calcOrderFinancials(o);
+                if (!o.settledCourier) totalCouriersCash += (parseFloat(o.paid) || 0);
+                if (!o.settledMerchant && ['تم التسليم', 'تم التسليم جزئي', 'مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن'].includes(o.status)) {
+                    totalMerchantsDues += fin.netMerchant;
+                }
                 if (['تم التسليم', 'تم التسليم جزئي', 'مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن'].includes(o.status)) {
                     earnedProfitFromOrders += fin.companyNet;
                 }
             });
-            const totalExpenses = expensesData.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-            return Math.max(0, earnedProfitFromOrders - totalExpenses);
+
+            // مصروفات التشغيل الفعلية فقط (لا تشمل توزيعات الشركاء أو مسحوبات الأرباح الشخصية)
+            const operatingExpenses = expensesData
+                .filter(e => e.category !== 'توزيعات أرباح شركاء' && e.category !== 'مسحوبات أرباح')
+                .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+            const ownerWithdrawals = expensesData
+                .filter(e => e.category === 'مسحوبات أرباح')
+                .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+            // وعاء صافي ربح الشركة التشغيلي (100%) الذي تُحسب منه نسب الشركاء
+            const totalOperatingProfit = Math.max(0, earnedProfitFromOrders - operatingExpenses);
+
+            let totalPartnersEntitled = 0;
+            let totalPartnersPaid = 0;
+            let totalPartnersRemainingNow = 0;
+
+            partnersData.forEach(p => {
+                const pct = parseFloat(p.percent) || 0;
+                const entitled = Math.round((totalOperatingProfit * pct) / 100);
+                const paid = parseFloat(p.paidTotal) || 0;
+                const remNow = Math.max(0, entitled - paid);
+                totalPartnersEntitled += entitled;
+                totalPartnersPaid += paid;
+                totalPartnersRemainingNow += remNow;
+            });
+
+            const ownerTotalEntitled = Math.max(0, totalOperatingProfit - totalPartnersEntitled);
+            const ownerRemainingNow = Math.max(0, ownerTotalEntitled - ownerWithdrawals);
+            const currentWithdrawableProfit = ownerRemainingNow + totalPartnersRemainingNow;
+
+            return {
+                totalCouriersCash,
+                totalMerchantsDues,
+                earnedProfitFromOrders,
+                operatingExpenses,
+                ownerWithdrawals,
+                totalOperatingProfit,
+                totalPartnersEntitled,
+                totalPartnersPaid,
+                totalPartnersRemainingNow,
+                ownerTotalEntitled,
+                ownerRemainingNow,
+                currentWithdrawableProfit
+            };
+        }
+
+        function getCurrentNetProfitValue() {
+            return getOperatingFinancials().currentWithdrawableProfit;
         }
 
         // =========================================================================
-        // دوال إدارة الشركاء وحساب النسب من 100% (Partners Management)
+        // دوال إدارة الشركاء وحساب النسب من 100% مع التصفير الفوري عند الصرف
         // =========================================================================
         function renderPartners() {
-            const currentNetProfit = getCurrentNetProfitValue();
+            const finStats = getOperatingFinancials();
             const totalPartnersPct = partnersData.reduce((s, p) => s + (parseFloat(p.percent) || 0), 0);
             const ownerRemPct = Math.max(0, 100 - totalPartnersPct);
-            const totalPartnersMoney = Math.round((currentNetProfit * totalPartnersPct) / 100);
-            const ownerNetMoney = Math.max(0, currentNetProfit - totalPartnersMoney);
 
             if (document.getElementById('badge-partners')) document.getElementById('badge-partners').innerText = partnersData.length;
             if (document.getElementById('prt-kpi-count')) document.getElementById('prt-kpi-count').innerText = partnersData.length + ' شريك';
             if (document.getElementById('prt-kpi-total-pct')) document.getElementById('prt-kpi-total-pct').innerText = totalPartnersPct + '%';
             if (document.getElementById('prt-kpi-rem-pct')) document.getElementById('prt-kpi-rem-pct').innerText = `حصة الشركة / المالك المتبقية: ${ownerRemPct}%`;
-            if (document.getElementById('prt-kpi-dues')) document.getElementById('prt-kpi-dues').innerText = totalPartnersMoney.toLocaleString() + ' ج.م';
-            if (document.getElementById('prt-kpi-owner-net')) document.getElementById('prt-kpi-owner-net').innerText = ownerNetMoney.toLocaleString() + ' ج.م';
+            if (document.getElementById('prt-kpi-dues')) document.getElementById('prt-kpi-dues').innerText = finStats.totalPartnersRemainingNow.toLocaleString() + ' ج.م';
+            if (document.getElementById('prt-kpi-owner-net')) document.getElementById('prt-kpi-owner-net').innerText = finStats.ownerRemainingNow.toLocaleString() + ' ج.م';
 
             if (document.getElementById('prt-bar-label')) {
                 document.getElementById('prt-bar-label').innerText = `${totalPartnersPct}% موزعة للشركاء (${partnersData.length}) | ${ownerRemPct}% للمالك الأساسي`;
@@ -1480,7 +1529,12 @@
             }
 
             tbody.innerHTML = partnersData.map((p, idx) => {
-                const partnerShareNow = Math.round((currentNetProfit * (parseFloat(p.percent) || 0)) / 100);
+                const pct = parseFloat(p.percent) || 0;
+                const totalEntitledForPartner = Math.round((finStats.totalOperatingProfit * pct) / 100);
+                const alreadyPaid = parseFloat(p.paidTotal) || 0;
+                // نصيب الشريك الحالي = إجمالي استحقاقه ناقص ما استلمه سابقاً (يتصفر فوراً عند الصرف!)
+                const partnerShareNow = Math.max(0, totalEntitledForPartner - alreadyPaid);
+
                 return `
                 <tr class="hover:bg-slate-50 transition">
                     <td class="p-3.5 font-mono font-black text-indigo-700">#${p.id}</td>
@@ -1494,22 +1548,35 @@
                     </td>
                     <td class="p-3.5">
                         <div class="flex items-center gap-1">
-                            <input type="number" min="1" max="100" step="0.5" value="${p.percent}" onchange="updatePartnerPercentInline(${idx}, this.value)" class="w-16 p-1.5 border border-indigo-300 rounded-lg text-center font-black text-indigo-800 bg-indigo-50/50">
+                            <input type="number" min="0.5" max="100" step="0.5" value="${p.percent}" onchange="updatePartnerPercentInline(${idx}, this.value)" class="w-16 p-1.5 border border-indigo-300 rounded-lg text-center font-black text-indigo-800 bg-indigo-50/50">
                             <span class="font-black text-indigo-700">%</span>
                         </div>
                     </td>
-                    <td class="p-3.5 font-black text-base text-emerald-600">${partnerShareNow.toLocaleString()} ج.م</td>
-                    <td class="p-3.5 font-bold text-blue-700">${(parseFloat(p.paidTotal) || 0).toLocaleString()} ج.م</td>
+                    <td class="p-3.5 font-black text-base ${partnerShareNow > 0 ? 'text-emerald-600' : 'text-slate-400'}">${partnerShareNow.toLocaleString()} ج.م</td>
+                    <td class="p-3.5">
+                        <div class="flex items-center gap-1" title="يمكنك تعديل أو تصفير المبلغ المستلم سابقاً من هنا">
+                            <input type="number" min="0" value="${alreadyPaid}" onchange="updatePartnerPaidInline(${idx}, this.value)" class="w-20 p-1.5 border border-blue-200 rounded-lg text-center font-black text-blue-700 bg-blue-50/40">
+                            <span class="text-[10px] font-bold text-blue-700">ج.م</span>
+                        </div>
+                    </td>
                     <td class="p-3.5">
                         <div class="flex items-center justify-center gap-1.5">
-                            <button onclick="payoutPartnerShare(${idx})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] shadow-xs">صرف نصيبه الآن</button>
-                            <a href="https://wa.me/2${p.phone}?text=${encodeURIComponent('مرحباً شريكنا العزيز ' + p.name + '، نصيبك الحالي من أرباح الشركة (' + p.percent + '%) هو: ' + partnerShareNow + ' ج.م')}" target="_blank" class="w-7 h-7 bg-emerald-50 text-emerald-700 rounded-lg flex items-center justify-center" title="إرسال كشف واتساب للشريك"><i class="fa-brands fa-whatsapp"></i></a>
+                            <button onclick="payoutPartnerShare(${idx})" class="px-3 py-1.5 ${partnerShareNow > 0 ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-200 text-slate-500'} rounded-lg font-bold text-[11px] shadow-xs">
+                                ${partnerShareNow > 0 ? 'صرف نصيبه الآن' : 'تم الصرف ✓'}
+                            </button>
+                            <a href="https://wa.me/2${p.phone}?text=${encodeURIComponent('مرحباً شريكنا العزيز ' + p.name + '، نصيبك الحالي من أرباح الشركة (' + p.percent + '%) هو: ' + partnerShareNow + ' ج.م، وإجمالي ما استلمته: ' + alreadyPaid + ' ج.م')}" target="_blank" class="w-7 h-7 bg-emerald-50 text-emerald-700 rounded-lg flex items-center justify-center" title="إرسال كشف واتساب للشريك"><i class="fa-brands fa-whatsapp"></i></a>
                             <button onclick="openPartnerModal(${idx})" class="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center" title="تعديل الشريك"><i class="fa-solid fa-pen-to-square"></i></button>
                             <button onclick="deletePartner(${idx})" class="w-7 h-7 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center" title="حذف الشريك"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>`;
             }).join('');
+        }
+
+        function updatePartnerPaidInline(idx, newVal) {
+            partnersData[idx].paidTotal = Math.max(0, parseFloat(newVal) || 0);
+            renderAll();
+            pushToCoreDB();
         }
 
         function openPartnerModal(editIdx = -1) {
@@ -1522,6 +1589,7 @@
                 document.getElementById('prt-percent').value = p.percent;
                 document.getElementById('prt-user').value = p.user;
                 document.getElementById('prt-pass').value = p.pass;
+                document.getElementById('prt-paid-total').value = parseFloat(p.paidTotal) || 0;
             } else {
                 document.getElementById('prt-name').value = '';
                 document.getElementById('prt-role').value = 'شريك بنسبة في الأرباح';
@@ -1529,6 +1597,7 @@
                 document.getElementById('prt-percent').value = 20;
                 document.getElementById('prt-user').value = 'partner' + (partnersData.length + 1);
                 document.getElementById('prt-pass').value = '123456';
+                document.getElementById('prt-paid-total').value = 0;
             }
             openModal('modal-partner');
         }
@@ -1541,9 +1610,10 @@
             const percent = parseFloat(document.getElementById('prt-percent').value) || 0;
             const user = String(document.getElementById('prt-user').value || '').trim() || ('partner' + (partnersData.length + 1));
             const pass = String(document.getElementById('prt-pass').value || '').trim() || '123456';
+            const paidTotal = Math.max(0, parseFloat(document.getElementById('prt-paid-total').value) || 0);
 
             if (!name) return alert('يرجى إدخال اسم الشريك');
-            if (percent <= 0 || percent > 100) return alert('يرجى إدخال نسبة شراكة صحيحة بين 1% و 100%');
+            if (percent <= 0 || percent > 100) return alert('يرجى إدخال نسبة شراكة صحيحة بين 0.5% و 100%');
 
             const otherPartnersPct = partnersData.reduce((s, p, i) => i === editIdx ? s : s + (parseFloat(p.percent) || 0), 0);
             if (otherPartnersPct + percent > 100) {
@@ -1551,12 +1621,12 @@
             }
 
             if (editIdx > -1 && partnersData[editIdx]) {
-                Object.assign(partnersData[editIdx], { name, roleTitle, phone, percent, user, pass });
+                Object.assign(partnersData[editIdx], { name, roleTitle, phone, percent, user, pass, paidTotal });
             } else {
                 partnersData.push({
                     id: 'PRT-0' + (partnersData.length + 1),
                     name, roleTitle, phone, percent, user, pass,
-                    paidTotal: 0
+                    paidTotal: paidTotal
                 });
             }
 
@@ -1568,7 +1638,7 @@
         function updatePartnerPercentInline(idx, newVal) {
             const pct = parseFloat(newVal) || 0;
             const otherPct = partnersData.reduce((s, p, i) => i === idx ? s : s + (parseFloat(p.percent) || 0), 0);
-            if (pct < 0 || otherPct + pct > 100) {
+            if (pct <= 0 || otherPct + pct > 100) {
                 alert(`⚠️ مجموع النسب لا يمكن أن يتجاوز 100% (المتاح كحد أقصى: ${100 - otherPct}%)`);
                 renderPartners();
                 return;
@@ -1581,17 +1651,28 @@
         function payoutPartnerShare(idx) {
             const p = partnersData[idx];
             if (!p) return;
-            const currentNetProfit = getCurrentNetProfitValue();
-            const shareAmount = Math.round((currentNetProfit * (parseFloat(p.percent) || 0)) / 100);
-            if (shareAmount <= 0) return alert('لا يوجد صافي ربح حالي قابل للتوزيع الآن (0 ج.م).');
+            const finStats = getOperatingFinancials();
+            const pct = parseFloat(p.percent) || 0;
+            const totalEntitled = Math.round((finStats.totalOperatingProfit * pct) / 100);
+            const alreadyPaid = parseFloat(p.paidTotal) || 0;
+            const shareAmountNow = Math.max(0, totalEntitled - alreadyPaid);
 
-            const confirmAmt = parseFloat(prompt(`نصيب الشريك (${p.name} - بنسبة ${p.percent}%) من الربح الحالي هو (${shareAmount} ج.م).\nاكتب المبلغ المراد صرفه وتسجيله له الآن:`, shareAmount)) || 0;
-            if (confirmAmt <= 0 || confirmAmt > currentNetProfit) return;
+            if (shareAmountNow <= 0) {
+                return alert(`✅ تم صرف كامل نصيب الشريك (${p.name}) الحالي بالفعل!\nرصيده المتاح للصرف الآن: 0 ج.م.`);
+            }
 
-            p.paidTotal = (parseFloat(p.paidTotal) || 0) + confirmAmt;
-            expensesData.unshift({ title: `صرف أرباح الشريك: ${p.name} (${p.percent}%)`, category: 'توزيعات أرباح شركاء', amount: confirmAmt, date: getFormattedNow() });
+            const inputVal = prompt(`نصيب الشريك (${p.name} - بنسبة ${pct}%) المتاح للصرف الآن هو (${shareAmountNow} ج.م).\nاكتب المبلغ المراد صرفه له الآن:`, shareAmountNow);
+            if (inputVal === null) return;
+
+            const confirmAmt = parseFloat(inputVal) || 0;
+            if (confirmAmt <= 0 || confirmAmt > shareAmountNow) {
+                return alert(`يرجى إدخال مبلغ صحيح لا يتجاوز نصيب الشريك الحالي (${shareAmountNow} ج.م).`);
+            }
+
+            // إضافة المبلغ إلى إجمالي ما استلمه الشريك فيتصفر نصيبه الحالي فوراً!
+            p.paidTotal = alreadyPaid + confirmAmt;
             withdrawnProfitsTotal += confirmAmt;
-            treasuryLogs.unshift({ text: `توزيع وصرف حصة الشريك (${p.name} - ${p.percent}%)`, amount: confirmAmt, type: 'profit', time: getFormattedNow() });
+            treasuryLogs.unshift({ text: `توزيع وصرف حصة الشريك (${p.name} - ${pct}%)`, amount: confirmAmt, type: 'profit', time: getFormattedNow() });
 
             renderAll();
             pushToCoreDB();
@@ -1999,25 +2080,17 @@
         }
 
         function renderTreasuryAndKPIs() {
-            let totalCouriersCash = 0, totalMerchantsDues = 0, earnedProfitFromOrders = 0;
-            ordersData.forEach(o => {
-                const fin = calcOrderFinancials(o);
-                if (!o.settledCourier) totalCouriersCash += (parseFloat(o.paid) || 0);
-                if (!o.settledMerchant && ['تم التسليم', 'تم التسليم جزئي', 'مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن'].includes(o.status)) totalMerchantsDues += fin.netMerchant;
-                if (['تم التسليم', 'تم التسليم جزئي', 'مرتجع وتم دفع الشحن', 'مرتجع ولم يدفع الشحن'].includes(o.status)) earnedProfitFromOrders += fin.companyNet;
-            });
-
-            const totalExpenses = expensesData.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-            const currentWithdrawableProfit = Math.max(0, earnedProfitFromOrders - totalExpenses);
-            const accumulatedHistoricalProfit = withdrawnProfitsTotal + currentWithdrawableProfit;
-            const totalOut = withdrawnProfitsTotal + settledMerchantsPayouts + totalExpenses;
-            const safeCashNow = totalCouriersCash + currentWithdrawableProfit + Math.max(0, totalMerchantsDues);
+            const finStats = getOperatingFinancials();
+            const currentWithdrawableProfit = finStats.currentWithdrawableProfit;
+            const accumulatedHistoricalProfit = finStats.totalOperatingProfit;
+            const totalOut = finStats.totalPartnersPaid + finStats.ownerWithdrawals + settledMerchantsPayouts + finStats.operatingExpenses;
+            const safeCashNow = finStats.totalCouriersCash + currentWithdrawableProfit + Math.max(0, finStats.totalMerchantsDues);
 
             const egwCount = ordersData.filter(o => o.source === 'E-Gateway').length;
             const shpCount = ordersData.filter(o => o.source === 'Shopify').length;
 
-            document.getElementById('kpi-total-cod').innerText = totalCouriersCash.toLocaleString() + ' ج.م';
-            document.getElementById('kpi-merchant-dues').innerText = totalMerchantsDues.toLocaleString() + ' ج.م';
+            document.getElementById('kpi-total-cod').innerText = finStats.totalCouriersCash.toLocaleString() + ' ج.م';
+            document.getElementById('kpi-merchant-dues').innerText = finStats.totalMerchantsDues.toLocaleString() + ' ج.م';
             document.getElementById('kpi-company-profit').innerText = currentWithdrawableProfit.toLocaleString() + ' ج.م';
             document.getElementById('kpi-shopify-orders').innerText = (egwCount + shpCount) + ' أوردر';
             document.getElementById('kpi-platforms-breakdown').innerText = `${egwCount} من E-Gateway • ${shpCount} من Shopify`;
@@ -2032,16 +2105,20 @@
             document.getElementById('tr-current-profit').innerText = currentWithdrawableProfit.toLocaleString() + ' ج.م';
             document.getElementById('tr-accumulated-profit').innerText = accumulatedHistoricalProfit.toLocaleString() + ' ج.م';
             document.getElementById('tr-safe-balance').innerText = safeCashNow.toLocaleString() + ' ج.م';
-            document.getElementById('tr-merchants-money').innerText = totalMerchantsDues.toLocaleString() + ' ج.م';
-            document.getElementById('tr-couriers-money').innerText = totalCouriersCash.toLocaleString() + ' ج.م';
+            document.getElementById('tr-merchants-money').innerText = finStats.totalMerchantsDues.toLocaleString() + ' ج.م';
+            document.getElementById('tr-couriers-money').innerText = finStats.totalCouriersCash.toLocaleString() + ' ج.م';
             document.getElementById('tr-total-out').innerText = totalOut.toLocaleString() + ' ج.م';
-            document.getElementById('tr-total-expenses-badge').innerText = 'إجمالي المصروفات: ' + totalExpenses.toLocaleString() + ' ج.م';
+            document.getElementById('tr-total-expenses-badge').innerText = 'إجمالي المصروفات التشغيلية: ' + finStats.operatingExpenses.toLocaleString() + ' ج.م';
 
             document.getElementById('treasury-logs').innerHTML = treasuryLogs.map(l => `<div class="p-3 rounded-xl bg-slate-50 border flex justify-between items-center"><div><strong class="text-slate-800">${l.text}</strong><span class="block text-[10px] text-slate-400">${l.time}</span></div><strong class="font-black ${l.type === 'in' ? 'text-emerald-600' : 'text-rose-600'}">${(parseFloat(l.amount)||0).toLocaleString()} ج.م</strong></div>`).join('');
         }
 
         function renderExpenses() {
-            document.getElementById('expenses-list').innerHTML = expensesData.map((e, idx) => `<div class="p-3 rounded-xl bg-slate-50 border flex justify-between items-center"><div><strong class="text-slate-800">${e.title}</strong><span class="block text-[10px] text-slate-400">${e.category || ''} | ${e.date}</span></div><div class="flex items-center gap-2"><strong class="text-rose-600 font-black">-${e.amount} ج.م</strong><button onclick="expensesData.splice(${idx},1);renderAll();pushToFinDB();" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center"><i class="fa-solid fa-trash"></i></button></div></div>`).join('');
+            const visibleExpenses = expensesData.filter(e => e.category !== 'توزيعات أرباح شركاء');
+            document.getElementById('expenses-list').innerHTML = visibleExpenses.map((e) => {
+                const realIdx = expensesData.indexOf(e);
+                return `<div class="p-3 rounded-xl bg-slate-50 border flex justify-between items-center"><div><strong class="text-slate-800">${e.title}</strong><span class="block text-[10px] text-slate-400">${e.category || ''} | ${e.date}</span></div><div class="flex items-center gap-2"><strong class="text-rose-600 font-black">-${e.amount} ج.م</strong><button onclick="expensesData.splice(${realIdx},1);renderAll();pushToFinDB();" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center"><i class="fa-solid fa-trash"></i></button></div></div>`;
+            }).join('');
         }
 
         function addExpense() {
@@ -2054,9 +2131,10 @@
         }
 
         function withdrawNetProfit() {
-            const currentVal = getCurrentNetProfitValue();
-            if (currentVal <= 0) return alert('صافي الربح الحالي القابل للسحب هو 0 ج.م');
-            const amount = parseFloat(prompt(`صافي الربح المتاح (${currentVal} ج.م). اكتب المبلغ المراد سحبه:`, currentVal)) || 0;
+            const finStats = getOperatingFinancials();
+            const currentVal = finStats.ownerRemainingNow;
+            if (currentVal <= 0) return alert('صافي حصة المالك المتبقية القابلة للسحب حالياً هو 0 ج.م');
+            const amount = parseFloat(prompt(`صافي حصة المالك المتاحة للسحب (${currentVal} ج.م). اكتب المبلغ المراد سحبه:`, currentVal)) || 0;
             if (amount <= 0 || amount > currentVal) return;
             expensesData.unshift({ title: 'سحب أرباح صافية للإدارة', category: 'مسحوبات أرباح', amount, date: getFormattedNow() });
             withdrawnProfitsTotal += amount;
@@ -2230,9 +2308,6 @@
         function copyWebhookUrl() { navigator.clipboard.writeText(document.getElementById('generated-webhook-url').innerText); alert('تم نسخ رابط الربط الفعلي!'); }
         function executeQuickScan() { const code = document.getElementById('quick-scan-input').value.trim(), action = document.getElementById('quick-scan-action').value; if (!code) return alert('اكتب رقم البوليصة أولاً'); const idx = ordersData.findIndex(o => String(o.awb).toLowerCase() === code.replace('#','').toLowerCase()); if (idx > -1) { changeOrderStatus(idx, action); alert(`تم تحديث #${ordersData[idx].awb} إلى (${action})`); } else alert(`لا توجد بوليصة بهذا الرقم #${code}`); document.getElementById('quick-scan-input').value = ''; }
 
-        // =========================================================================
-        // محرك زر الرجوع الذكي للموبايل (History API Router)
-        // =========================================================================
         let isHandlingPopState = false;
 
         function toggleMobileSidebar(open, skipHistory = false) {
